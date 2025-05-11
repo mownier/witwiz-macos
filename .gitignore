@@ -1,0 +1,59 @@
+# Xcode project files
+*.xcodeproj/project.pbxproj
+*.xcworkspace/
+xcuserdata/
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.xcuserstate
+
+# Build products
+build/
+DerivedData/
+Products/
+
+# Swift Package Manager
+Package.resolved
+.swiftpm/xcode/
+
+# CocoaPods
+Pods/
+*.xcworkspace/
+Podfile.lock
+
+# Carthage
+Carthage/Build/
+
+# fastlane
+fastlane/report.xml
+fastlane/screenshots/
+
+# Apple-specific files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*~
+*.swp
+*.tmp
+
+# Logs
+*.log
+
+# Crash logs
+*.crash
+*.ips
+
+# gRPC generated code (if applicable)
+/YourProjectName/Sources/Generated/  # Adjust the path!
+
+# Code coverage
+*.gcda
+*.gcno
+
+# DSYM files (debug symbols - usually not committed)
+*.dSYM
+*.dSYM.zip
+
+# Build server files
+project.xcworkspace/
