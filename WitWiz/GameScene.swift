@@ -6,16 +6,17 @@ import GRPCCore
 import GRPCNIOTransportHTTP2
 
 class GameScene: SKScene, ObservableObject {
-    let (playerInputStream, playerInputContinuation) = AsyncStream<Witwiz_PlayerInput>.makeStream()
-    let (gameStateStream, gameStateContinuation) = AsyncStream<Witwiz_GameStateUpdate>.makeStream()
-    
     var yourId: Int32?
     var gameState: Witwiz_GameStateUpdate?
     var connectClientTask: Task<Void, Error>?
     var processGameStateTask: Task<Void, Error>?
     
+    var playerInputContinuation: AsyncStream<Witwiz_PlayerInput>.Continuation?
+    
+    @Published var clientOkay: Bool = false
+    
     override func didMove(to view: SKView) {
-        startTasks()
+        backgroundColor = .gray
     }
     
     override func keyDown(with event: NSEvent) {
@@ -24,51 +25,41 @@ class GameScene: SKScene, ObservableObject {
             var input = Witwiz_PlayerInput()
             input.action = .moveUp
             input.playerID = yourId ?? -1
-            playerInputContinuation.yield(input)
+            playerInputContinuation?.yield(input)
         case 0: // a
             var input = Witwiz_PlayerInput()
             input.action = .moveLeft
             input.playerID = yourId ?? -1
-            playerInputContinuation.yield(input)
+            playerInputContinuation?.yield(input)
         case 1: // s
             var input = Witwiz_PlayerInput()
             input.action = .moveDown
             input.playerID = yourId ?? -1
-            playerInputContinuation.yield(input)
+            playerInputContinuation?.yield(input)
         case 2: // d
             var input = Witwiz_PlayerInput()
             input.action = .moveRight
             input.playerID = yourId ?? -1
-            playerInputContinuation.yield(input)
+            playerInputContinuation?.yield(input)
         default:
             break
         }
     }
     
-    func cleanUp() {
-        stopTasks()
-    }
-    
-    private func startTasks() {
-        if processGameStateTask != nil && connectClientTask != nil {
-            return
-        }
+    func activateClient() {
         processGameStateTask?.cancel()
         connectClientTask?.cancel()
-        processGameStateTask = Task {
-            for await state in gameStateStream {
-                if Task.isCancelled {
-                    return
-                }
-                processGameState(state)
+        connectClientTask = Task {
+            do {
+                try await connectClient()
+            } catch {
+                clientOkay = false
             }
         }
-        connectClientTask = Task {
-            try await connectClient()
-        }
+        clientOkay = true
     }
     
-    private func stopTasks() {
+    func deactivateClient() {
         connectClientTask?.cancel()
         processGameStateTask?.cancel()
         connectClientTask = nil
@@ -76,8 +67,17 @@ class GameScene: SKScene, ObservableObject {
     }
     
     private func connectClient() async throws {
+        let (gsStream, gsContinuation) = AsyncStream<Witwiz_GameStateUpdate>.makeStream()
+        let (piStream, piContinuation) = AsyncStream<Witwiz_PlayerInput>.makeStream()
+        playerInputContinuation = piContinuation
+        processGameStateTask?.cancel()
+        processGameStateTask = Task {
+            for try await state in gsStream {
+                processGameState(state)
+            }
+        }
         let client = await WitWizClient().host("192.168.1.6").port(40041).useTLS(false)
-        try await client.joinGame(playerInputStream, gameStateContinuation)
+        try await client.joinGame(piStream, gsContinuation)
         processGameStateTask?.cancel()
         processGameStateTask = nil
         gameState = nil
@@ -85,11 +85,14 @@ class GameScene: SKScene, ObservableObject {
         connectClientTask = nil
     }
     
-    func processGameState(_ state: Witwiz_GameStateUpdate) {
+    private func processGameState(_ state: Witwiz_GameStateUpdate) {
         print("gameState", state)
         gameState = state
         if yourId == nil && state.yourPlayerID != 0 {
             yourId = state.yourPlayerID
+        }
+        state.players.forEach { player in
+            
         }
     }
 }

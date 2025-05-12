@@ -6,13 +6,19 @@ struct ContentView: View {
     @StateObject var scene = GameScene()
     
     var body: some View {
-        SpriteView(scene: scene)
-            .onDisappear {
-                scene.isPaused = true
-                scene.cleanUp()
+        ZStack {
+            SpriteView(scene: scene)
+                .onAppear {
+                    scene.activateClient()
+                }
+                .onDisappear {
+                    scene.deactivateClient()
+                }
+            if !scene.clientOkay {
+                Button("Connect") {
+                    scene.activateClient()
+                }
             }
-        Button("Action") {
-            print("TODO")
         }
     }
 }
