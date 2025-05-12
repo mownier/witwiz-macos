@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package witwiz;
+
+option go_package="witwiz/proto";
+
+service WitWiz {
+    rpc JoinGame(stream PlayerInput) returns (stream GameStateUpdate) {}
+}
+
+message PlayerInput {
+    int32 player_id = 1;
+    Action action = 2;
+    enum Action {
+        MOVE_UP = 0;
+        MOVE_RIGHT = 1;
+        MOVE_DOWN = 2;
+        MOVE_LEFT = 3;
+        SHOOT = 4;
+    }
+}
+
+message GameStateUpdate {
+    repeated PlayerState players = 1;
+    repeated ProjectileState projectiles = 2;
+    int32 your_player_id = 3;
+}
+
+message PlayerState {
+    int32 player_id = 1;
+    float position_x = 2;
+    float position_y = 3;
+    float bounding_box_width = 4;
+    float bounding_box_height = 5;
+}
+
+message ProjectileState {
+    int32 projectile_id = 1;
+    int32 owner_id = 2;
+    float position_x = 3;
+    float position_y = 4;
+    float bounding_box_width = 5;
+    float bounding_box_height = 6;
+    float velocity_x = 7;
+    float velocity_y = 8;
+}
