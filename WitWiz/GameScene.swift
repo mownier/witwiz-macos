@@ -15,6 +15,11 @@ class GameScene: SKScene, ObservableObject {
     
     @Published var clientOkay: Bool = false
     
+    func setSize(_ value: CGSize) -> GameScene {
+        size = value
+        return self
+    }
+    
     override func didMove(to view: SKView) {
         backgroundColor = .gray
     }
@@ -80,19 +85,48 @@ class GameScene: SKScene, ObservableObject {
         try await client.joinGame(piStream, gsContinuation)
         processGameStateTask?.cancel()
         processGameStateTask = nil
+        if let yourId = yourId {
+            childNode(withName: "player\(yourId)")?.removeFromParent()
+        }
         gameState = nil
         yourId = nil
         connectClientTask = nil
     }
     
     private func processGameState(_ state: Witwiz_GameStateUpdate) {
-        print("gameState", state)
         gameState = state
         if yourId == nil && state.yourPlayerID != 0 {
             yourId = state.yourPlayerID
         }
         state.players.forEach { player in
-            
+            if let node = childNode(withName: "player\(player.playerID)") {
+                let pos = CGPoint(x: player.positionX.cgFloat, y: player.positionY.cgFloat)
+                node.position = pos
+            } else {
+                let size = CGSize(width: player.boundingBoxWidth.cgFloat, height: player.boundingBoxHeight.cgFloat)
+                let position = CGPoint(x: player.positionX.cgFloat, y: player.positionY.cgFloat)
+                let rect = CGRect(origin: CGPoint(x: 0, y: 0), size: size)
+                let node = SKShapeNode(rect: rect)
+                node.name = "player\(player.playerID)"
+                if player.playerID == 1 {
+                    node.fillColor = .blue
+                    node.strokeColor = .blue
+                } else if player.playerID == 2 {
+                    node.fillColor = .orange
+                    node.strokeColor = .orange
+                } else {
+                    node.fillColor = .red
+                    node.strokeColor = .red
+                }
+                node.position = position
+                addChild(node)
+            }
         }
+    }
+}
+
+extension Float {
+    var cgFloat: CGFloat {
+        return CGFloat(self)
     }
 }

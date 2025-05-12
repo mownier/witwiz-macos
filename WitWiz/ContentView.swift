@@ -7,13 +7,15 @@ struct ContentView: View {
     
     var body: some View {
         ZStack {
-            SpriteView(scene: scene)
-                .onAppear {
-                    scene.activateClient()
-                }
-                .onDisappear {
-                    scene.deactivateClient()
-                }
+            GeometryReader { reader in
+                SpriteView(scene: scene.setSize(reader.size))
+                    .onAppear {
+                        scene.activateClient()
+                    }
+                    .onDisappear {
+                        scene.deactivateClient()
+                    }
+            }
             if !scene.clientOkay {
                 Button("Connect") {
                     scene.activateClient()
