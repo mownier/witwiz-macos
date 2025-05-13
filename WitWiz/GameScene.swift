@@ -13,6 +13,11 @@ class GameScene: SKScene, ObservableObject {
     
     var playerInputContinuation: AsyncStream<Witwiz_PlayerInput>.Continuation?
     
+    var moveUpKeyPressed: Bool = false
+    var moveDownKeyPressed: Bool = false
+    var moveRightKeyPressed: Bool = false
+    var moveLeftKeyPressed: Bool = false
+    
     @Published var clientOkay: Bool = false
     
     func setSize(_ value: CGSize) -> GameScene {
@@ -26,24 +31,59 @@ class GameScene: SKScene, ObservableObject {
     
     override func keyDown(with event: NSEvent) {
         switch event.keyCode {
-        case 13: // w
+        case 13 where !moveUpKeyPressed: // w
+            moveUpKeyPressed = true
             var input = Witwiz_PlayerInput()
-            input.action = .moveUp
+            input.action = .moveUpStart
             input.playerID = yourId ?? -1
             playerInputContinuation?.yield(input)
-        case 0: // a
+        case 0 where !moveLeftKeyPressed: // a
+            moveLeftKeyPressed = true
             var input = Witwiz_PlayerInput()
-            input.action = .moveLeft
+            input.action = .moveLeftStart
             input.playerID = yourId ?? -1
             playerInputContinuation?.yield(input)
-        case 1: // s
+        case 1 where !moveDownKeyPressed: // s
+            moveDownKeyPressed = true
             var input = Witwiz_PlayerInput()
-            input.action = .moveDown
+            input.action = .moveDownStart
             input.playerID = yourId ?? -1
             playerInputContinuation?.yield(input)
-        case 2: // d
+        case 2 where !moveRightKeyPressed: // d
+            moveRightKeyPressed = true
             var input = Witwiz_PlayerInput()
-            input.action = .moveRight
+            input.action = .moveRightStart
+            input.playerID = yourId ?? -1
+            playerInputContinuation?.yield(input)
+        default:
+            break
+        }
+    }
+    
+    override func keyUp(with event: NSEvent) {
+        switch event.keyCode {
+        case 13 where moveUpKeyPressed: // w
+            moveUpKeyPressed = false
+            var input = Witwiz_PlayerInput()
+            input.action = .moveUpStop
+            input.playerID = yourId ?? -1
+            playerInputContinuation?.yield(input)
+        case 0 where moveLeftKeyPressed: // a
+            moveLeftKeyPressed = false
+            var input = Witwiz_PlayerInput()
+            input.action = .moveLeftStop
+            input.playerID = yourId ?? -1
+            playerInputContinuation?.yield(input)
+        case 1 where moveDownKeyPressed: // s
+            moveDownKeyPressed = false
+            var input = Witwiz_PlayerInput()
+            input.action = .moveDownStop
+            input.playerID = yourId ?? -1
+            playerInputContinuation?.yield(input)
+        case 2 where moveRightKeyPressed: // d
+            moveRightKeyPressed = false
+            var input = Witwiz_PlayerInput()
+            input.action = .moveRightStop
             input.playerID = yourId ?? -1
             playerInputContinuation?.yield(input)
         default:

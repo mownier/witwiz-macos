@@ -27,51 +27,71 @@ public struct Witwiz_PlayerInput: Sendable {
 
   public var playerID: Int32 = 0
 
-  public var action: Witwiz_PlayerInput.Action = .moveUp
+  public var action: Witwiz_PlayerInput.Action = .none
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public enum Action: SwiftProtobuf.Enum, Swift.CaseIterable {
     public typealias RawValue = Int
-    case moveUp // = 0
-    case moveRight // = 1
-    case moveDown // = 2
-    case moveLeft // = 3
-    case shoot // = 4
+    case none // = 0
+    case moveRightStart // = 1
+    case moveRightStop // = 2
+    case moveLeftStart // = 3
+    case moveLeftStop // = 4
+    case moveUpStart // = 5
+    case moveUpStop // = 6
+    case moveDownStart // = 7
+    case moveDownStop // = 8
+    case shoot // = 9
     case UNRECOGNIZED(Int)
 
     public init() {
-      self = .moveUp
+      self = .none
     }
 
     public init?(rawValue: Int) {
       switch rawValue {
-      case 0: self = .moveUp
-      case 1: self = .moveRight
-      case 2: self = .moveDown
-      case 3: self = .moveLeft
-      case 4: self = .shoot
+      case 0: self = .none
+      case 1: self = .moveRightStart
+      case 2: self = .moveRightStop
+      case 3: self = .moveLeftStart
+      case 4: self = .moveLeftStop
+      case 5: self = .moveUpStart
+      case 6: self = .moveUpStop
+      case 7: self = .moveDownStart
+      case 8: self = .moveDownStop
+      case 9: self = .shoot
       default: self = .UNRECOGNIZED(rawValue)
       }
     }
 
     public var rawValue: Int {
       switch self {
-      case .moveUp: return 0
-      case .moveRight: return 1
-      case .moveDown: return 2
-      case .moveLeft: return 3
-      case .shoot: return 4
+      case .none: return 0
+      case .moveRightStart: return 1
+      case .moveRightStop: return 2
+      case .moveLeftStart: return 3
+      case .moveLeftStop: return 4
+      case .moveUpStart: return 5
+      case .moveUpStop: return 6
+      case .moveDownStart: return 7
+      case .moveDownStop: return 8
+      case .shoot: return 9
       case .UNRECOGNIZED(let i): return i
       }
     }
 
     // The compiler won't synthesize support with the UNRECOGNIZED case.
     public static let allCases: [Witwiz_PlayerInput.Action] = [
-      .moveUp,
-      .moveRight,
-      .moveDown,
-      .moveLeft,
+      .none,
+      .moveRightStart,
+      .moveRightStop,
+      .moveLeftStart,
+      .moveLeftStop,
+      .moveUpStart,
+      .moveUpStop,
+      .moveDownStart,
+      .moveDownStop,
       .shoot,
     ]
 
@@ -141,6 +161,15 @@ public struct Witwiz_PlayerState: Sendable {
 
   public var maxSpeed: Float = 0
 
+  public var targetVelocity: Witwiz_Vector2 {
+    get {return _targetVelocity ?? Witwiz_Vector2()}
+    set {_targetVelocity = newValue}
+  }
+  /// Returns true if `targetVelocity` has been explicitly set.
+  public var hasTargetVelocity: Bool {return self._targetVelocity != nil}
+  /// Clears the value of `targetVelocity`. Subsequent reads from it will return its default value.
+  public mutating func clearTargetVelocity() {self._targetVelocity = nil}
+
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
@@ -149,6 +178,7 @@ public struct Witwiz_PlayerState: Sendable {
   fileprivate var _velocity: Witwiz_Vector2? = nil
   fileprivate var _acceleration: Witwiz_Vector2? = nil
   fileprivate var _boundingBox: Witwiz_BoundingBox? = nil
+  fileprivate var _targetVelocity: Witwiz_Vector2? = nil
 }
 
 public struct Witwiz_ProjectileState: Sendable {
@@ -254,7 +284,7 @@ extension Witwiz_PlayerInput: SwiftProtobuf.Message, SwiftProtobuf._MessageImple
     if self.playerID != 0 {
       try visitor.visitSingularInt32Field(value: self.playerID, fieldNumber: 1)
     }
-    if self.action != .moveUp {
+    if self.action != .none {
       try visitor.visitSingularEnumField(value: self.action, fieldNumber: 2)
     }
     try unknownFields.traverse(visitor: &visitor)
@@ -270,11 +300,16 @@ extension Witwiz_PlayerInput: SwiftProtobuf.Message, SwiftProtobuf._MessageImple
 
 extension Witwiz_PlayerInput.Action: SwiftProtobuf._ProtoNameProviding {
   public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
-    0: .same(proto: "MOVE_UP"),
-    1: .same(proto: "MOVE_RIGHT"),
-    2: .same(proto: "MOVE_DOWN"),
-    3: .same(proto: "MOVE_LEFT"),
-    4: .same(proto: "SHOOT"),
+    0: .same(proto: "NONE"),
+    1: .same(proto: "MOVE_RIGHT_START"),
+    2: .same(proto: "MOVE_RIGHT_STOP"),
+    3: .same(proto: "MOVE_LEFT_START"),
+    4: .same(proto: "MOVE_LEFT_STOP"),
+    5: .same(proto: "MOVE_UP_START"),
+    6: .same(proto: "MOVE_UP_STOP"),
+    7: .same(proto: "MOVE_DOWN_START"),
+    8: .same(proto: "MOVE_DOWN_STOP"),
+    9: .same(proto: "SHOOT"),
   ]
 }
 
@@ -331,6 +366,7 @@ extension Witwiz_PlayerState: SwiftProtobuf.Message, SwiftProtobuf._MessageImple
     4: .same(proto: "acceleration"),
     5: .same(proto: "boundingBox"),
     6: .same(proto: "maxSpeed"),
+    7: .same(proto: "targetVelocity"),
   ]
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
@@ -345,6 +381,7 @@ extension Witwiz_PlayerState: SwiftProtobuf.Message, SwiftProtobuf._MessageImple
       case 4: try { try decoder.decodeSingularMessageField(value: &self._acceleration) }()
       case 5: try { try decoder.decodeSingularMessageField(value: &self._boundingBox) }()
       case 6: try { try decoder.decodeSingularFloatField(value: &self.maxSpeed) }()
+      case 7: try { try decoder.decodeSingularMessageField(value: &self._targetVelocity) }()
       default: break
       }
     }
@@ -373,6 +410,9 @@ extension Witwiz_PlayerState: SwiftProtobuf.Message, SwiftProtobuf._MessageImple
     if self.maxSpeed.bitPattern != 0 {
       try visitor.visitSingularFloatField(value: self.maxSpeed, fieldNumber: 6)
     }
+    try { if let v = self._targetVelocity {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 7)
+    } }()
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -383,6 +423,7 @@ extension Witwiz_PlayerState: SwiftProtobuf.Message, SwiftProtobuf._MessageImple
     if lhs._acceleration != rhs._acceleration {return false}
     if lhs._boundingBox != rhs._boundingBox {return false}
     if lhs.maxSpeed != rhs.maxSpeed {return false}
+    if lhs._targetVelocity != rhs._targetVelocity {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

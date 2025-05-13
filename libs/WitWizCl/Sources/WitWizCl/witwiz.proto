@@ -12,11 +12,16 @@ message PlayerInput {
     int32 player_id = 1;
     Action action = 2;
     enum Action {
-        MOVE_UP = 0;
-        MOVE_RIGHT = 1;
-        MOVE_DOWN = 2;
-        MOVE_LEFT = 3;
-        SHOOT = 4;
+        NONE = 0;
+        MOVE_RIGHT_START = 1;
+        MOVE_RIGHT_STOP = 2;
+        MOVE_LEFT_START = 3;
+        MOVE_LEFT_STOP  = 4;
+        MOVE_UP_START = 5;
+        MOVE_UP_STOP = 6;
+        MOVE_DOWN_START = 7;
+        MOVE_DOWN_STOP = 8;
+        SHOOT = 9;
     }
 }
 
@@ -33,6 +38,7 @@ message PlayerState {
     Vector2 acceleration = 4;
     BoundingBox boundingBox = 5;
     float maxSpeed = 6;
+    Vector2 targetVelocity = 7;
 }
 
 message ProjectileState {
