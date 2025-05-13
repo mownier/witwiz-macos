@@ -103,17 +103,52 @@ public struct Witwiz_PlayerState: Sendable {
 
   public var playerID: Int32 = 0
 
-  public var positionX: Float = 0
+  public var position: Witwiz_Vector2 {
+    get {return _position ?? Witwiz_Vector2()}
+    set {_position = newValue}
+  }
+  /// Returns true if `position` has been explicitly set.
+  public var hasPosition: Bool {return self._position != nil}
+  /// Clears the value of `position`. Subsequent reads from it will return its default value.
+  public mutating func clearPosition() {self._position = nil}
 
-  public var positionY: Float = 0
+  public var velocity: Witwiz_Vector2 {
+    get {return _velocity ?? Witwiz_Vector2()}
+    set {_velocity = newValue}
+  }
+  /// Returns true if `velocity` has been explicitly set.
+  public var hasVelocity: Bool {return self._velocity != nil}
+  /// Clears the value of `velocity`. Subsequent reads from it will return its default value.
+  public mutating func clearVelocity() {self._velocity = nil}
 
-  public var boundingBoxWidth: Float = 0
+  public var acceleration: Witwiz_Vector2 {
+    get {return _acceleration ?? Witwiz_Vector2()}
+    set {_acceleration = newValue}
+  }
+  /// Returns true if `acceleration` has been explicitly set.
+  public var hasAcceleration: Bool {return self._acceleration != nil}
+  /// Clears the value of `acceleration`. Subsequent reads from it will return its default value.
+  public mutating func clearAcceleration() {self._acceleration = nil}
 
-  public var boundingBoxHeight: Float = 0
+  public var boundingBox: Witwiz_BoundingBox {
+    get {return _boundingBox ?? Witwiz_BoundingBox()}
+    set {_boundingBox = newValue}
+  }
+  /// Returns true if `boundingBox` has been explicitly set.
+  public var hasBoundingBox: Bool {return self._boundingBox != nil}
+  /// Clears the value of `boundingBox`. Subsequent reads from it will return its default value.
+  public mutating func clearBoundingBox() {self._boundingBox = nil}
+
+  public var maxSpeed: Float = 0
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
+
+  fileprivate var _position: Witwiz_Vector2? = nil
+  fileprivate var _velocity: Witwiz_Vector2? = nil
+  fileprivate var _acceleration: Witwiz_Vector2? = nil
+  fileprivate var _boundingBox: Witwiz_BoundingBox? = nil
 }
 
 public struct Witwiz_ProjectileState: Sendable {
@@ -125,17 +160,66 @@ public struct Witwiz_ProjectileState: Sendable {
 
   public var ownerID: Int32 = 0
 
-  public var positionX: Float = 0
+  public var position: Witwiz_Vector2 {
+    get {return _position ?? Witwiz_Vector2()}
+    set {_position = newValue}
+  }
+  /// Returns true if `position` has been explicitly set.
+  public var hasPosition: Bool {return self._position != nil}
+  /// Clears the value of `position`. Subsequent reads from it will return its default value.
+  public mutating func clearPosition() {self._position = nil}
 
-  public var positionY: Float = 0
+  public var velocity: Witwiz_Vector2 {
+    get {return _velocity ?? Witwiz_Vector2()}
+    set {_velocity = newValue}
+  }
+  /// Returns true if `velocity` has been explicitly set.
+  public var hasVelocity: Bool {return self._velocity != nil}
+  /// Clears the value of `velocity`. Subsequent reads from it will return its default value.
+  public mutating func clearVelocity() {self._velocity = nil}
 
-  public var boundingBoxWidth: Float = 0
+  public var boundingBox: Witwiz_BoundingBox {
+    get {return _boundingBox ?? Witwiz_BoundingBox()}
+    set {_boundingBox = newValue}
+  }
+  /// Returns true if `boundingBox` has been explicitly set.
+  public var hasBoundingBox: Bool {return self._boundingBox != nil}
+  /// Clears the value of `boundingBox`. Subsequent reads from it will return its default value.
+  public mutating func clearBoundingBox() {self._boundingBox = nil}
 
-  public var boundingBoxHeight: Float = 0
+  public var maxSpeed: Float = 0
 
-  public var velocityX: Float = 0
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
 
-  public var velocityY: Float = 0
+  public init() {}
+
+  fileprivate var _position: Witwiz_Vector2? = nil
+  fileprivate var _velocity: Witwiz_Vector2? = nil
+  fileprivate var _boundingBox: Witwiz_BoundingBox? = nil
+}
+
+public struct Witwiz_Vector2: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  public var x: Float = 0
+
+  public var y: Float = 0
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+public struct Witwiz_BoundingBox: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  public var width: Float = 0
+
+  public var height: Float = 0
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -242,10 +326,11 @@ extension Witwiz_PlayerState: SwiftProtobuf.Message, SwiftProtobuf._MessageImple
   public static let protoMessageName: String = _protobuf_package + ".PlayerState"
   public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
     1: .standard(proto: "player_id"),
-    2: .standard(proto: "position_x"),
-    3: .standard(proto: "position_y"),
-    4: .standard(proto: "bounding_box_width"),
-    5: .standard(proto: "bounding_box_height"),
+    2: .same(proto: "position"),
+    3: .same(proto: "velocity"),
+    4: .same(proto: "acceleration"),
+    5: .same(proto: "boundingBox"),
+    6: .same(proto: "maxSpeed"),
   ]
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
@@ -255,40 +340,49 @@ extension Witwiz_PlayerState: SwiftProtobuf.Message, SwiftProtobuf._MessageImple
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularInt32Field(value: &self.playerID) }()
-      case 2: try { try decoder.decodeSingularFloatField(value: &self.positionX) }()
-      case 3: try { try decoder.decodeSingularFloatField(value: &self.positionY) }()
-      case 4: try { try decoder.decodeSingularFloatField(value: &self.boundingBoxWidth) }()
-      case 5: try { try decoder.decodeSingularFloatField(value: &self.boundingBoxHeight) }()
+      case 2: try { try decoder.decodeSingularMessageField(value: &self._position) }()
+      case 3: try { try decoder.decodeSingularMessageField(value: &self._velocity) }()
+      case 4: try { try decoder.decodeSingularMessageField(value: &self._acceleration) }()
+      case 5: try { try decoder.decodeSingularMessageField(value: &self._boundingBox) }()
+      case 6: try { try decoder.decodeSingularFloatField(value: &self.maxSpeed) }()
       default: break
       }
     }
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
     if self.playerID != 0 {
       try visitor.visitSingularInt32Field(value: self.playerID, fieldNumber: 1)
     }
-    if self.positionX.bitPattern != 0 {
-      try visitor.visitSingularFloatField(value: self.positionX, fieldNumber: 2)
-    }
-    if self.positionY.bitPattern != 0 {
-      try visitor.visitSingularFloatField(value: self.positionY, fieldNumber: 3)
-    }
-    if self.boundingBoxWidth.bitPattern != 0 {
-      try visitor.visitSingularFloatField(value: self.boundingBoxWidth, fieldNumber: 4)
-    }
-    if self.boundingBoxHeight.bitPattern != 0 {
-      try visitor.visitSingularFloatField(value: self.boundingBoxHeight, fieldNumber: 5)
+    try { if let v = self._position {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
+    } }()
+    try { if let v = self._velocity {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 3)
+    } }()
+    try { if let v = self._acceleration {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 4)
+    } }()
+    try { if let v = self._boundingBox {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 5)
+    } }()
+    if self.maxSpeed.bitPattern != 0 {
+      try visitor.visitSingularFloatField(value: self.maxSpeed, fieldNumber: 6)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Witwiz_PlayerState, rhs: Witwiz_PlayerState) -> Bool {
     if lhs.playerID != rhs.playerID {return false}
-    if lhs.positionX != rhs.positionX {return false}
-    if lhs.positionY != rhs.positionY {return false}
-    if lhs.boundingBoxWidth != rhs.boundingBoxWidth {return false}
-    if lhs.boundingBoxHeight != rhs.boundingBoxHeight {return false}
+    if lhs._position != rhs._position {return false}
+    if lhs._velocity != rhs._velocity {return false}
+    if lhs._acceleration != rhs._acceleration {return false}
+    if lhs._boundingBox != rhs._boundingBox {return false}
+    if lhs.maxSpeed != rhs.maxSpeed {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -299,12 +393,10 @@ extension Witwiz_ProjectileState: SwiftProtobuf.Message, SwiftProtobuf._MessageI
   public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
     1: .standard(proto: "projectile_id"),
     2: .standard(proto: "owner_id"),
-    3: .standard(proto: "position_x"),
-    4: .standard(proto: "position_y"),
-    5: .standard(proto: "bounding_box_width"),
-    6: .standard(proto: "bounding_box_height"),
-    7: .standard(proto: "velocity_x"),
-    8: .standard(proto: "velocity_y"),
+    3: .same(proto: "position"),
+    4: .same(proto: "velocity"),
+    5: .same(proto: "boundingBox"),
+    6: .same(proto: "maxSpeed"),
   ]
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
@@ -315,41 +407,37 @@ extension Witwiz_ProjectileState: SwiftProtobuf.Message, SwiftProtobuf._MessageI
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularInt32Field(value: &self.projectileID) }()
       case 2: try { try decoder.decodeSingularInt32Field(value: &self.ownerID) }()
-      case 3: try { try decoder.decodeSingularFloatField(value: &self.positionX) }()
-      case 4: try { try decoder.decodeSingularFloatField(value: &self.positionY) }()
-      case 5: try { try decoder.decodeSingularFloatField(value: &self.boundingBoxWidth) }()
-      case 6: try { try decoder.decodeSingularFloatField(value: &self.boundingBoxHeight) }()
-      case 7: try { try decoder.decodeSingularFloatField(value: &self.velocityX) }()
-      case 8: try { try decoder.decodeSingularFloatField(value: &self.velocityY) }()
+      case 3: try { try decoder.decodeSingularMessageField(value: &self._position) }()
+      case 4: try { try decoder.decodeSingularMessageField(value: &self._velocity) }()
+      case 5: try { try decoder.decodeSingularMessageField(value: &self._boundingBox) }()
+      case 6: try { try decoder.decodeSingularFloatField(value: &self.maxSpeed) }()
       default: break
       }
     }
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
     if self.projectileID != 0 {
       try visitor.visitSingularInt32Field(value: self.projectileID, fieldNumber: 1)
     }
     if self.ownerID != 0 {
       try visitor.visitSingularInt32Field(value: self.ownerID, fieldNumber: 2)
     }
-    if self.positionX.bitPattern != 0 {
-      try visitor.visitSingularFloatField(value: self.positionX, fieldNumber: 3)
-    }
-    if self.positionY.bitPattern != 0 {
-      try visitor.visitSingularFloatField(value: self.positionY, fieldNumber: 4)
-    }
-    if self.boundingBoxWidth.bitPattern != 0 {
-      try visitor.visitSingularFloatField(value: self.boundingBoxWidth, fieldNumber: 5)
-    }
-    if self.boundingBoxHeight.bitPattern != 0 {
-      try visitor.visitSingularFloatField(value: self.boundingBoxHeight, fieldNumber: 6)
-    }
-    if self.velocityX.bitPattern != 0 {
-      try visitor.visitSingularFloatField(value: self.velocityX, fieldNumber: 7)
-    }
-    if self.velocityY.bitPattern != 0 {
-      try visitor.visitSingularFloatField(value: self.velocityY, fieldNumber: 8)
+    try { if let v = self._position {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 3)
+    } }()
+    try { if let v = self._velocity {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 4)
+    } }()
+    try { if let v = self._boundingBox {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 5)
+    } }()
+    if self.maxSpeed.bitPattern != 0 {
+      try visitor.visitSingularFloatField(value: self.maxSpeed, fieldNumber: 6)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -357,12 +445,86 @@ extension Witwiz_ProjectileState: SwiftProtobuf.Message, SwiftProtobuf._MessageI
   public static func ==(lhs: Witwiz_ProjectileState, rhs: Witwiz_ProjectileState) -> Bool {
     if lhs.projectileID != rhs.projectileID {return false}
     if lhs.ownerID != rhs.ownerID {return false}
-    if lhs.positionX != rhs.positionX {return false}
-    if lhs.positionY != rhs.positionY {return false}
-    if lhs.boundingBoxWidth != rhs.boundingBoxWidth {return false}
-    if lhs.boundingBoxHeight != rhs.boundingBoxHeight {return false}
-    if lhs.velocityX != rhs.velocityX {return false}
-    if lhs.velocityY != rhs.velocityY {return false}
+    if lhs._position != rhs._position {return false}
+    if lhs._velocity != rhs._velocity {return false}
+    if lhs._boundingBox != rhs._boundingBox {return false}
+    if lhs.maxSpeed != rhs.maxSpeed {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Witwiz_Vector2: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".Vector2"
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    1: .same(proto: "x"),
+    2: .same(proto: "y"),
+  ]
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularFloatField(value: &self.x) }()
+      case 2: try { try decoder.decodeSingularFloatField(value: &self.y) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if self.x.bitPattern != 0 {
+      try visitor.visitSingularFloatField(value: self.x, fieldNumber: 1)
+    }
+    if self.y.bitPattern != 0 {
+      try visitor.visitSingularFloatField(value: self.y, fieldNumber: 2)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Witwiz_Vector2, rhs: Witwiz_Vector2) -> Bool {
+    if lhs.x != rhs.x {return false}
+    if lhs.y != rhs.y {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Witwiz_BoundingBox: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".BoundingBox"
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    1: .same(proto: "width"),
+    2: .same(proto: "height"),
+  ]
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularFloatField(value: &self.width) }()
+      case 2: try { try decoder.decodeSingularFloatField(value: &self.height) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if self.width.bitPattern != 0 {
+      try visitor.visitSingularFloatField(value: self.width, fieldNumber: 1)
+    }
+    if self.height.bitPattern != 0 {
+      try visitor.visitSingularFloatField(value: self.height, fieldNumber: 2)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Witwiz_BoundingBox, rhs: Witwiz_BoundingBox) -> Bool {
+    if lhs.width != rhs.width {return false}
+    if lhs.height != rhs.height {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

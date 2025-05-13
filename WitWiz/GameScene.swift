@@ -100,11 +100,11 @@ class GameScene: SKScene, ObservableObject {
         }
         state.players.forEach { player in
             if let node = childNode(withName: "player\(player.playerID)") {
-                let pos = CGPoint(x: player.positionX.cgFloat, y: player.positionY.cgFloat)
+                let pos = CGPoint(x: player.position.x.cgFloat, y: player.position.y.cgFloat)
                 node.position = pos
             } else {
-                let size = CGSize(width: player.boundingBoxWidth.cgFloat, height: player.boundingBoxHeight.cgFloat)
-                let position = CGPoint(x: player.positionX.cgFloat, y: player.positionY.cgFloat)
+                let size = CGSize(width: player.boundingBox.width.cgFloat, height: player.boundingBox.height.cgFloat)
+                let position = CGPoint(x: player.position.x.cgFloat, y: player.position.y.cgFloat)
                 let rect = CGRect(origin: CGPoint(x: 0, y: 0), size: size)
                 let node = SKShapeNode(rect: rect)
                 node.name = "player\(player.playerID)"
