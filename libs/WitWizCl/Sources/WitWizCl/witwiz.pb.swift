@@ -144,6 +144,8 @@ public struct Witwiz_GameStateUpdate: Sendable {
   /// Clears the value of `worldOffset`. Subsequent reads from it will return its default value.
   public mutating func clearWorldOffset() {self._worldOffset = nil}
 
+  public var levelID: Int32 = 0
+
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
@@ -382,6 +384,7 @@ extension Witwiz_GameStateUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageI
     3: .standard(proto: "your_player_id"),
     4: .standard(proto: "world_view_port"),
     5: .standard(proto: "world_offset"),
+    6: .standard(proto: "level_id"),
   ]
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
@@ -395,6 +398,7 @@ extension Witwiz_GameStateUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageI
       case 3: try { try decoder.decodeSingularInt32Field(value: &self.yourPlayerID) }()
       case 4: try { try decoder.decodeSingularMessageField(value: &self._worldViewPort) }()
       case 5: try { try decoder.decodeSingularMessageField(value: &self._worldOffset) }()
+      case 6: try { try decoder.decodeSingularInt32Field(value: &self.levelID) }()
       default: break
       }
     }
@@ -420,6 +424,9 @@ extension Witwiz_GameStateUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageI
     try { if let v = self._worldOffset {
       try visitor.visitSingularMessageField(value: v, fieldNumber: 5)
     } }()
+    if self.levelID != 0 {
+      try visitor.visitSingularInt32Field(value: self.levelID, fieldNumber: 6)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -429,6 +436,7 @@ extension Witwiz_GameStateUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageI
     if lhs.yourPlayerID != rhs.yourPlayerID {return false}
     if lhs._worldViewPort != rhs._worldViewPort {return false}
     if lhs._worldOffset != rhs._worldOffset {return false}
+    if lhs.levelID != rhs.levelID {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

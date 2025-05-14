@@ -7,6 +7,7 @@ import GRPCNIOTransportHTTP2
 
 class GameScene: SKScene, ObservableObject {
     var yourId: Int32?
+    var levelID: Int32?
     var gameState: Witwiz_GameStateUpdate?
     var connectClientTask: Task<Void, Error>?
     var processGameStateTask: Task<Void, Error>?
@@ -158,28 +159,19 @@ class GameScene: SKScene, ObservableObject {
         if worldViewPort == nil && state.hasWorldViewPort {
             worldViewPort = state.worldViewPort
         }
+        if levelID == nil && state.levelID != 0 {
+            levelID = state.levelID
+        }
         if let viewPort = worldViewPort {
             if let node = childNode(withName: "world_background") as? SKSpriteNode {
                 node.position.x = worldOffsetX * -1
             } else {
                 size.width = min(viewPort.width.cgFloat, size.width)
                 size.height = min(viewPort.height.cgFloat, size.height)
-                let size = CGSize(width: viewPort.width.cgFloat, height: viewPort.height.cgFloat)
-                let parentNode = SKSpriteNode.make()
-                parentNode.color = .red
-                parentNode.size = size
-                parentNode.name = "world_background"
-                parentNode.position = CGPoint(x: 0, y: 0)
-                let childCount = 100
-                let childWidth = size.width / 100
-                for i in 0..<childCount {
-                    let childNode = SKSpriteNode.make()
-                    childNode.size = CGSize(width: childWidth, height: size.height)
-                    childNode.position.x = CGFloat(i) * childWidth
-                    childNode.color = i % 2 == 0 ? .lightGray : .gray
-                    parentNode.addChild(childNode)
+                let worldSize = CGSize(width: viewPort.width.cgFloat, height: viewPort.height.cgFloat)
+                if let levelID = levelID {
+                    createGameLevel(levelID: levelID, size: worldSize)
                 }
-                addChild(parentNode)
             }
         }
         state.players.forEach { player in
@@ -214,6 +206,17 @@ class GameScene: SKScene, ObservableObject {
         input.viewPort.width = size.width.float
         input.viewPort.height = size.height.float
         playerInputContinuation?.yield(input)
+    }
+    
+    private func createGameLevel(levelID: Int32, size: CGSize) {
+        let gameLevel: SKSpriteNode
+        switch levelID {
+        case 1: gameLevel = GameLevel1.make(size: size)
+        default:
+            return
+        }
+        gameLevel.name = "world_background"
+        addChild(gameLevel)
     }
 }
 

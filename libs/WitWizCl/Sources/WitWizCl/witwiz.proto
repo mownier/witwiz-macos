@@ -33,6 +33,7 @@ message GameStateUpdate {
     int32 your_player_id = 3;
     ViewPort world_view_port = 4;
     Vector2 world_offset = 5;
+    int32 level_id = 6;
 }
 
 message PlayerState {
