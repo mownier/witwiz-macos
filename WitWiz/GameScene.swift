@@ -25,6 +25,11 @@ class GameScene: SKScene, ObservableObject {
     
     func setSize(_ value: CGSize) -> GameScene {
         size = value
+        if let viewPort = worldViewPort {
+            size.width = min(viewPort.width.cgFloat, size.width)
+            size.height = min(viewPort.height.cgFloat, size.height)
+        }
+        scaleMode = .aspectFit
         if let playerID = yourId {
             sendViewPort(playerID)
         }
@@ -157,18 +162,21 @@ class GameScene: SKScene, ObservableObject {
             if let node = childNode(withName: "world_background") as? SKSpriteNode {
                 node.position.x = worldOffsetX * -1
             } else {
+                size.width = min(viewPort.width.cgFloat, size.width)
+                size.height = min(viewPort.height.cgFloat, size.height)
                 let size = CGSize(width: viewPort.width.cgFloat, height: viewPort.height.cgFloat)
-                let parentNode = SKSpriteNode()
+                let parentNode = SKSpriteNode.make()
+                parentNode.color = .red
                 parentNode.size = size
                 parentNode.name = "world_background"
                 parentNode.position = CGPoint(x: 0, y: 0)
                 let childCount = 100
                 let childWidth = size.width / 100
                 for i in 0..<childCount {
-                    let childNode = SKSpriteNode()
+                    let childNode = SKSpriteNode.make()
                     childNode.size = CGSize(width: childWidth, height: size.height)
                     childNode.position.x = CGFloat(i) * childWidth
-                    childNode.color = randomColor()
+                    childNode.color = i % 2 == 0 ? .lightGray : .gray
                     parentNode.addChild(childNode)
                 }
                 addChild(parentNode)
@@ -181,18 +189,16 @@ class GameScene: SKScene, ObservableObject {
             } else {
                 let size = CGSize(width: player.boundingBox.width.cgFloat, height: player.boundingBox.height.cgFloat)
                 let position = CGPoint(x: player.position.x.cgFloat, y: player.position.y.cgFloat)
-                let rect = CGRect(origin: CGPoint(x: 0, y: 0), size: size)
-                let node = SKShapeNode(rect: rect)
+                let node = SKSpriteNode.make()
+                node.size = size
+                node.position = position
                 node.name = "player\(player.playerID)"
                 if player.playerID == 1 {
-                    node.fillColor = .blue
-                    node.strokeColor = .blue
+                    node.color = .blue
                 } else if player.playerID == 2 {
-                    node.fillColor = .orange
-                    node.strokeColor = .orange
+                    node.color = .orange
                 } else {
-                    node.fillColor = .red
-                    node.strokeColor = .red
+                    node.color = .red
                 }
                 node.position = position
                 addChild(node)
@@ -223,11 +229,11 @@ extension CGFloat {
     }
 }
 
-func randomColor() -> NSColor {
-    let red = CGFloat.random(in: 0...1)
-    let green = CGFloat.random(in: 0...1)
-    let blue = CGFloat.random(in: 0...1)
-    let alpha = CGFloat.random(in: 1...1) // Typically want fully opaque colors, so alpha is 1
-
-    return NSColor(red: red, green: green, blue: blue, alpha: alpha)
+extension SKSpriteNode {
+    static func make() -> SKSpriteNode {
+        let node = SKSpriteNode()
+        node.anchorPoint.x = 0
+        node.anchorPoint.y = 0
+        return node
+    }
 }
