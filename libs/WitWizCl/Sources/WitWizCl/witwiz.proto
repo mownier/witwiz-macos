@@ -32,6 +32,7 @@ message GameStateUpdate {
     repeated ProjectileState projectiles = 2;
     int32 your_player_id = 3;
     ViewPort world_view_port = 4;
+    Vector2 world_offset = 5;
 }
 
 message PlayerState {

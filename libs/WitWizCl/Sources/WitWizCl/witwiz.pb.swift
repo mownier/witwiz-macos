@@ -135,11 +135,21 @@ public struct Witwiz_GameStateUpdate: Sendable {
   /// Clears the value of `worldViewPort`. Subsequent reads from it will return its default value.
   public mutating func clearWorldViewPort() {self._worldViewPort = nil}
 
+  public var worldOffset: Witwiz_Vector2 {
+    get {return _worldOffset ?? Witwiz_Vector2()}
+    set {_worldOffset = newValue}
+  }
+  /// Returns true if `worldOffset` has been explicitly set.
+  public var hasWorldOffset: Bool {return self._worldOffset != nil}
+  /// Clears the value of `worldOffset`. Subsequent reads from it will return its default value.
+  public mutating func clearWorldOffset() {self._worldOffset = nil}
+
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
 
   fileprivate var _worldViewPort: Witwiz_ViewPort? = nil
+  fileprivate var _worldOffset: Witwiz_Vector2? = nil
 }
 
 public struct Witwiz_PlayerState: Sendable {
@@ -371,6 +381,7 @@ extension Witwiz_GameStateUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageI
     2: .same(proto: "projectiles"),
     3: .standard(proto: "your_player_id"),
     4: .standard(proto: "world_view_port"),
+    5: .standard(proto: "world_offset"),
   ]
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
@@ -383,6 +394,7 @@ extension Witwiz_GameStateUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageI
       case 2: try { try decoder.decodeRepeatedMessageField(value: &self.projectiles) }()
       case 3: try { try decoder.decodeSingularInt32Field(value: &self.yourPlayerID) }()
       case 4: try { try decoder.decodeSingularMessageField(value: &self._worldViewPort) }()
+      case 5: try { try decoder.decodeSingularMessageField(value: &self._worldOffset) }()
       default: break
       }
     }
@@ -405,6 +417,9 @@ extension Witwiz_GameStateUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageI
     try { if let v = self._worldViewPort {
       try visitor.visitSingularMessageField(value: v, fieldNumber: 4)
     } }()
+    try { if let v = self._worldOffset {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 5)
+    } }()
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -413,6 +428,7 @@ extension Witwiz_GameStateUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageI
     if lhs.projectiles != rhs.projectiles {return false}
     if lhs.yourPlayerID != rhs.yourPlayerID {return false}
     if lhs._worldViewPort != rhs._worldViewPort {return false}
+    if lhs._worldOffset != rhs._worldOffset {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

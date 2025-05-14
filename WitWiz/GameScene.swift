@@ -19,6 +19,8 @@ class GameScene: SKScene, ObservableObject {
     var moveRightKeyPressed: Bool = false
     var moveLeftKeyPressed: Bool = false
     
+    var worldOffsetX: CGFloat = 0
+    
     @Published var clientOkay: Bool = false
     
     func setSize(_ value: CGSize) -> GameScene {
@@ -141,12 +143,36 @@ class GameScene: SKScene, ObservableObject {
     
     private func processGameState(_ state: Witwiz_GameStateUpdate) {
         gameState = state
+        if state.hasWorldOffset {
+            worldOffsetX = state.worldOffset.x.cgFloat
+        }
         if yourId == nil && state.yourPlayerID != 0 {
             yourId = state.yourPlayerID
             sendViewPort(state.yourPlayerID)
         }
         if worldViewPort == nil && state.hasWorldViewPort {
             worldViewPort = state.worldViewPort
+        }
+        if let viewPort = worldViewPort {
+            if let node = childNode(withName: "world_background") as? SKSpriteNode {
+                node.position.x = worldOffsetX * -1
+            } else {
+                let size = CGSize(width: viewPort.width.cgFloat, height: viewPort.height.cgFloat)
+                let parentNode = SKSpriteNode()
+                parentNode.size = size
+                parentNode.name = "world_background"
+                parentNode.position = CGPoint(x: 0, y: 0)
+                let childCount = 100
+                let childWidth = size.width / 100
+                for i in 0..<childCount {
+                    let childNode = SKSpriteNode()
+                    childNode.size = CGSize(width: childWidth, height: size.height)
+                    childNode.position.x = CGFloat(i) * childWidth
+                    childNode.color = randomColor()
+                    parentNode.addChild(childNode)
+                }
+                addChild(parentNode)
+            }
         }
         state.players.forEach { player in
             if let node = childNode(withName: "player\(player.playerID)") {
@@ -195,4 +221,13 @@ extension CGFloat {
     var float: Float {
         return Float(self)
     }
+}
+
+func randomColor() -> NSColor {
+    let red = CGFloat.random(in: 0...1)
+    let green = CGFloat.random(in: 0...1)
+    let blue = CGFloat.random(in: 0...1)
+    let alpha = CGFloat.random(in: 1...1) // Typically want fully opaque colors, so alpha is 1
+
+    return NSColor(red: red, green: green, blue: blue, alpha: alpha)
 }
