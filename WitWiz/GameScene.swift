@@ -156,11 +156,12 @@ class GameScene: SKScene, ObservableObject {
             yourId = state.yourPlayerID
             sendViewPort(state.yourPlayerID)
         }
-        if worldViewPort == nil && state.hasWorldViewPort {
+        if state.hasWorldViewPort {
             worldViewPort = state.worldViewPort
         }
-        if levelID == nil && state.levelID != 0 {
+        if state.levelID != 0 && levelID != state.levelID {
             levelID = state.levelID
+            childNode(withName: "world_background")?.removeFromParent()
         }
         if let viewPort = worldViewPort {
             if let node = childNode(withName: "world_background") as? SKSpriteNode {
@@ -212,10 +213,12 @@ class GameScene: SKScene, ObservableObject {
         let gameLevel: SKSpriteNode
         switch levelID {
         case 1: gameLevel = GameLevel1.make(size: size)
+        case 2: gameLevel = GameLevel2.make(size: size)
         default:
             return
         }
         gameLevel.name = "world_background"
+        gameLevel.zPosition = -1
         addChild(gameLevel)
     }
 }
