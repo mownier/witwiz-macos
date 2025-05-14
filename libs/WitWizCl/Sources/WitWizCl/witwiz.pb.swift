@@ -29,6 +29,15 @@ public struct Witwiz_PlayerInput: Sendable {
 
   public var action: Witwiz_PlayerInput.Action = .none
 
+  public var viewPort: Witwiz_ViewPort {
+    get {return _viewPort ?? Witwiz_ViewPort()}
+    set {_viewPort = newValue}
+  }
+  /// Returns true if `viewPort` has been explicitly set.
+  public var hasViewPort: Bool {return self._viewPort != nil}
+  /// Clears the value of `viewPort`. Subsequent reads from it will return its default value.
+  public mutating func clearViewPort() {self._viewPort = nil}
+
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public enum Action: SwiftProtobuf.Enum, Swift.CaseIterable {
@@ -43,6 +52,7 @@ public struct Witwiz_PlayerInput: Sendable {
     case moveDownStart // = 7
     case moveDownStop // = 8
     case shoot // = 9
+    case reportViewport // = 10
     case UNRECOGNIZED(Int)
 
     public init() {
@@ -61,6 +71,7 @@ public struct Witwiz_PlayerInput: Sendable {
       case 7: self = .moveDownStart
       case 8: self = .moveDownStop
       case 9: self = .shoot
+      case 10: self = .reportViewport
       default: self = .UNRECOGNIZED(rawValue)
       }
     }
@@ -77,6 +88,7 @@ public struct Witwiz_PlayerInput: Sendable {
       case .moveDownStart: return 7
       case .moveDownStop: return 8
       case .shoot: return 9
+      case .reportViewport: return 10
       case .UNRECOGNIZED(let i): return i
       }
     }
@@ -93,11 +105,14 @@ public struct Witwiz_PlayerInput: Sendable {
       .moveDownStart,
       .moveDownStop,
       .shoot,
+      .reportViewport,
     ]
 
   }
 
   public init() {}
+
+  fileprivate var _viewPort: Witwiz_ViewPort? = nil
 }
 
 public struct Witwiz_GameStateUpdate: Sendable {
@@ -111,9 +126,20 @@ public struct Witwiz_GameStateUpdate: Sendable {
 
   public var yourPlayerID: Int32 = 0
 
+  public var worldViewPort: Witwiz_ViewPort {
+    get {return _worldViewPort ?? Witwiz_ViewPort()}
+    set {_worldViewPort = newValue}
+  }
+  /// Returns true if `worldViewPort` has been explicitly set.
+  public var hasWorldViewPort: Bool {return self._worldViewPort != nil}
+  /// Clears the value of `worldViewPort`. Subsequent reads from it will return its default value.
+  public mutating func clearWorldViewPort() {self._worldViewPort = nil}
+
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
+
+  fileprivate var _worldViewPort: Witwiz_ViewPort? = nil
 }
 
 public struct Witwiz_PlayerState: Sendable {
@@ -256,6 +282,20 @@ public struct Witwiz_BoundingBox: Sendable {
   public init() {}
 }
 
+public struct Witwiz_ViewPort: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  public var width: Float = 0
+
+  public var height: Float = 0
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
 
 fileprivate let _protobuf_package = "witwiz"
@@ -265,6 +305,7 @@ extension Witwiz_PlayerInput: SwiftProtobuf.Message, SwiftProtobuf._MessageImple
   public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
     1: .standard(proto: "player_id"),
     2: .same(proto: "action"),
+    3: .standard(proto: "view_port"),
   ]
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
@@ -275,24 +316,33 @@ extension Witwiz_PlayerInput: SwiftProtobuf.Message, SwiftProtobuf._MessageImple
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularInt32Field(value: &self.playerID) }()
       case 2: try { try decoder.decodeSingularEnumField(value: &self.action) }()
+      case 3: try { try decoder.decodeSingularMessageField(value: &self._viewPort) }()
       default: break
       }
     }
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
     if self.playerID != 0 {
       try visitor.visitSingularInt32Field(value: self.playerID, fieldNumber: 1)
     }
     if self.action != .none {
       try visitor.visitSingularEnumField(value: self.action, fieldNumber: 2)
     }
+    try { if let v = self._viewPort {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 3)
+    } }()
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Witwiz_PlayerInput, rhs: Witwiz_PlayerInput) -> Bool {
     if lhs.playerID != rhs.playerID {return false}
     if lhs.action != rhs.action {return false}
+    if lhs._viewPort != rhs._viewPort {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -310,6 +360,7 @@ extension Witwiz_PlayerInput.Action: SwiftProtobuf._ProtoNameProviding {
     7: .same(proto: "MOVE_DOWN_START"),
     8: .same(proto: "MOVE_DOWN_STOP"),
     9: .same(proto: "SHOOT"),
+    10: .same(proto: "REPORT_VIEWPORT"),
   ]
 }
 
@@ -319,6 +370,7 @@ extension Witwiz_GameStateUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageI
     1: .same(proto: "players"),
     2: .same(proto: "projectiles"),
     3: .standard(proto: "your_player_id"),
+    4: .standard(proto: "world_view_port"),
   ]
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
@@ -330,12 +382,17 @@ extension Witwiz_GameStateUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageI
       case 1: try { try decoder.decodeRepeatedMessageField(value: &self.players) }()
       case 2: try { try decoder.decodeRepeatedMessageField(value: &self.projectiles) }()
       case 3: try { try decoder.decodeSingularInt32Field(value: &self.yourPlayerID) }()
+      case 4: try { try decoder.decodeSingularMessageField(value: &self._worldViewPort) }()
       default: break
       }
     }
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
     if !self.players.isEmpty {
       try visitor.visitRepeatedMessageField(value: self.players, fieldNumber: 1)
     }
@@ -345,6 +402,9 @@ extension Witwiz_GameStateUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageI
     if self.yourPlayerID != 0 {
       try visitor.visitSingularInt32Field(value: self.yourPlayerID, fieldNumber: 3)
     }
+    try { if let v = self._worldViewPort {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 4)
+    } }()
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -352,6 +412,7 @@ extension Witwiz_GameStateUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageI
     if lhs.players != rhs.players {return false}
     if lhs.projectiles != rhs.projectiles {return false}
     if lhs.yourPlayerID != rhs.yourPlayerID {return false}
+    if lhs._worldViewPort != rhs._worldViewPort {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -564,6 +625,44 @@ extension Witwiz_BoundingBox: SwiftProtobuf.Message, SwiftProtobuf._MessageImple
   }
 
   public static func ==(lhs: Witwiz_BoundingBox, rhs: Witwiz_BoundingBox) -> Bool {
+    if lhs.width != rhs.width {return false}
+    if lhs.height != rhs.height {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Witwiz_ViewPort: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".ViewPort"
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    1: .same(proto: "width"),
+    2: .same(proto: "height"),
+  ]
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularFloatField(value: &self.width) }()
+      case 2: try { try decoder.decodeSingularFloatField(value: &self.height) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if self.width.bitPattern != 0 {
+      try visitor.visitSingularFloatField(value: self.width, fieldNumber: 1)
+    }
+    if self.height.bitPattern != 0 {
+      try visitor.visitSingularFloatField(value: self.height, fieldNumber: 2)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Witwiz_ViewPort, rhs: Witwiz_ViewPort) -> Bool {
     if lhs.width != rhs.width {return false}
     if lhs.height != rhs.height {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}

@@ -10,6 +10,7 @@ class GameScene: SKScene, ObservableObject {
     var gameState: Witwiz_GameStateUpdate?
     var connectClientTask: Task<Void, Error>?
     var processGameStateTask: Task<Void, Error>?
+    var worldViewPort: Witwiz_ViewPort?
     
     var playerInputContinuation: AsyncStream<Witwiz_PlayerInput>.Continuation?
     
@@ -22,6 +23,9 @@ class GameScene: SKScene, ObservableObject {
     
     func setSize(_ value: CGSize) -> GameScene {
         size = value
+        if let playerID = yourId {
+            sendViewPort(playerID)
+        }
         return self
     }
     
@@ -131,12 +135,18 @@ class GameScene: SKScene, ObservableObject {
         gameState = nil
         yourId = nil
         connectClientTask = nil
+        worldViewPort = nil
+        playerInputContinuation = nil
     }
     
     private func processGameState(_ state: Witwiz_GameStateUpdate) {
         gameState = state
         if yourId == nil && state.yourPlayerID != 0 {
             yourId = state.yourPlayerID
+            sendViewPort(state.yourPlayerID)
+        }
+        if worldViewPort == nil && state.hasWorldViewPort {
+            worldViewPort = state.worldViewPort
         }
         state.players.forEach { player in
             if let node = childNode(withName: "player\(player.playerID)") {
@@ -163,10 +173,26 @@ class GameScene: SKScene, ObservableObject {
             }
         }
     }
+    
+    private func sendViewPort(_ playerID: Int32) {
+        var input = Witwiz_PlayerInput()
+        input.playerID = playerID
+        input.action = .reportViewport
+        input.viewPort = Witwiz_ViewPort()
+        input.viewPort.width = size.width.float
+        input.viewPort.height = size.height.float
+        playerInputContinuation?.yield(input)
+    }
 }
 
 extension Float {
     var cgFloat: CGFloat {
         return CGFloat(self)
+    }
+}
+
+extension CGFloat {
+    var float: Float {
+        return Float(self)
     }
 }

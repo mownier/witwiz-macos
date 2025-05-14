@@ -22,13 +22,16 @@ message PlayerInput {
         MOVE_DOWN_START = 7;
         MOVE_DOWN_STOP = 8;
         SHOOT = 9;
+        REPORT_VIEWPORT = 10;
     }
+    ViewPort view_port = 3;
 }
 
 message GameStateUpdate {
     repeated PlayerState players = 1;
     repeated ProjectileState projectiles = 2;
     int32 your_player_id = 3;
+    ViewPort world_view_port = 4;
 }
 
 message PlayerState {
@@ -56,6 +59,11 @@ message Vector2 {
 }
 
 message BoundingBox {
+    float width = 1;
+    float height = 2;
+}
+
+message ViewPort {
     float width = 1;
     float height = 2;
 }
