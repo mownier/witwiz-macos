@@ -13,6 +13,7 @@ class GameScene: SKScene, ObservableObject {
     var joinGameOkTask: Task<Void, Error>?
     var worldViewPort: Witwiz_ViewPort?
     var characterIds: [Int32] = []
+    var playerIds: Set<Int32> = []
     
     var playerInputContinuation: AsyncStream<Witwiz_PlayerInput>.Continuation?
     
@@ -134,6 +135,7 @@ class GameScene: SKScene, ObservableObject {
             characterIds = []
             gameStarted = false
             selectCharacter = false
+            playerIds = []
         }
     }
     
@@ -295,7 +297,13 @@ class GameScene: SKScene, ObservableObject {
                     default: node.color = .black
                     }
                     addChild(node)
+                    playerIds.insert(player.playerID)
                 }
+            }
+        }
+        playerIds.forEach { pId in
+            if !state.players.contains(where: { $0.playerID == pId }) {
+                childNode(withName: "player\(pId)")?.removeFromParent()
             }
         }
     }
