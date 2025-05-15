@@ -15,7 +15,7 @@ class GameScene: SKScene, ObservableObject {
     var worldOffsetX: CGFloat = 0
     var worldViewPort: Witwiz_ViewPort = Witwiz_ViewPort()
     var characterIds: [Int32] = []
-    var playerIds: Set<Int32> = []
+    var playerIDs: Set<Int32> = []
     
     var playerInputContinuation: AsyncStream<Witwiz_PlayerInput>.Continuation?
     
@@ -23,6 +23,7 @@ class GameScene: SKScene, ObservableObject {
     var moveDownKeyPressed: Bool = false
     var moveRightKeyPressed: Bool = false
     var moveLeftKeyPressed: Bool = false
+    var pauseGameKeyPressed: Bool = false
     
     @Published var clientOkay: Bool = false
     @Published var gameStarted: Bool = false
@@ -72,7 +73,8 @@ class GameScene: SKScene, ObservableObject {
             input.action = .moveRightStart
             input.playerID = yourID
             playerInputContinuation?.yield(input)
-        case 49: // space bar
+        case 49 where !pauseGameKeyPressed: // space bar
+            pauseGameKeyPressed = true
             var input = Witwiz_PlayerInput()
             input.action = .pauseResume
             input.playerID = yourID
@@ -108,6 +110,8 @@ class GameScene: SKScene, ObservableObject {
             input.action = .moveRightStop
             input.playerID = yourID
             playerInputContinuation?.yield(input)
+        case 49 where pauseGameKeyPressed: // space bar
+            pauseGameKeyPressed = false
         default:
             break
         }
@@ -121,7 +125,9 @@ class GameScene: SKScene, ObservableObject {
             } catch {
                 updateClientOkay(false)
             }
-            childNode(withName: "player\(yourID)")?.removeFromParent()
+            playerIDs.forEach { playerId in
+                childNode(withName: "player\(playerId)")?.removeFromParent()
+            }
             childNode(withName: "world_background")?.removeFromParent()
             joinGameOkTask?.cancel()
             processGameStateTask?.cancel()
@@ -131,9 +137,11 @@ class GameScene: SKScene, ObservableObject {
             playerInputContinuation = nil
             worldViewPort = Witwiz_ViewPort()
             characterIds = []
-            playerIds = []
+            playerIDs = []
             updateGameStarted(false)
             updateSelectCharacter(false)
+            updateGameOver(false)
+            updateGamePaused(false)
         }
     }
     
@@ -220,6 +228,7 @@ class GameScene: SKScene, ObservableObject {
         if state.isInitial {
             state.players.forEach { player in
                 yourID = player.playerID
+                sendViewPort()
             }
             return
         }
@@ -268,12 +277,12 @@ class GameScene: SKScene, ObservableObject {
                 node.position = position
                 node.name = "player\(player.playerID)"
                 addChild(node)
-                playerIds.insert(player.playerID)
+                playerIDs.insert(player.playerID)
             }
         }
-        playerIds.forEach { pId in
-            if !state.players.contains(where: { $0.playerID == pId }) {
-                childNode(withName: "player\(pId)")?.removeFromParent()
+        playerIDs.forEach { playerID in
+            if !state.players.contains(where: { $0.playerID == playerID }) {
+                childNode(withName: "player\(playerID)")?.removeFromParent()
             }
         }
     }
