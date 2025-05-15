@@ -57,6 +57,7 @@ public struct Witwiz_PlayerInput: Sendable {
     case reportViewport // = 10
     case selectCharacter // = 11
     case startGame // = 12
+    case restart // = 13
     case UNRECOGNIZED(Int)
 
     public init() {
@@ -78,6 +79,7 @@ public struct Witwiz_PlayerInput: Sendable {
       case 10: self = .reportViewport
       case 11: self = .selectCharacter
       case 12: self = .startGame
+      case 13: self = .restart
       default: self = .UNRECOGNIZED(rawValue)
       }
     }
@@ -97,6 +99,7 @@ public struct Witwiz_PlayerInput: Sendable {
       case .reportViewport: return 10
       case .selectCharacter: return 11
       case .startGame: return 12
+      case .restart: return 13
       case .UNRECOGNIZED(let i): return i
       }
     }
@@ -116,6 +119,7 @@ public struct Witwiz_PlayerInput: Sendable {
       .reportViewport,
       .selectCharacter,
       .startGame,
+      .restart,
     ]
 
   }
@@ -159,6 +163,8 @@ public struct Witwiz_GameStateUpdate: Sendable {
   public var gameStarted: Bool = false
 
   public var characterIds: [Int32] = []
+
+  public var gameOver: Bool = false
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -397,6 +403,7 @@ extension Witwiz_PlayerInput.Action: SwiftProtobuf._ProtoNameProviding {
     10: .same(proto: "REPORT_VIEWPORT"),
     11: .same(proto: "SELECT_CHARACTER"),
     12: .same(proto: "START_GAME"),
+    13: .same(proto: "RESTART"),
   ]
 }
 
@@ -411,6 +418,7 @@ extension Witwiz_GameStateUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageI
     6: .standard(proto: "level_id"),
     7: .standard(proto: "game_started"),
     8: .standard(proto: "character_ids"),
+    9: .standard(proto: "game_over"),
   ]
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
@@ -427,6 +435,7 @@ extension Witwiz_GameStateUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageI
       case 6: try { try decoder.decodeSingularInt32Field(value: &self.levelID) }()
       case 7: try { try decoder.decodeSingularBoolField(value: &self.gameStarted) }()
       case 8: try { try decoder.decodeRepeatedInt32Field(value: &self.characterIds) }()
+      case 9: try { try decoder.decodeSingularBoolField(value: &self.gameOver) }()
       default: break
       }
     }
@@ -461,6 +470,9 @@ extension Witwiz_GameStateUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageI
     if !self.characterIds.isEmpty {
       try visitor.visitPackedInt32Field(value: self.characterIds, fieldNumber: 8)
     }
+    if self.gameOver != false {
+      try visitor.visitSingularBoolField(value: self.gameOver, fieldNumber: 9)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -473,6 +485,7 @@ extension Witwiz_GameStateUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageI
     if lhs.levelID != rhs.levelID {return false}
     if lhs.gameStarted != rhs.gameStarted {return false}
     if lhs.characterIds != rhs.characterIds {return false}
+    if lhs.gameOver != rhs.gameOver {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

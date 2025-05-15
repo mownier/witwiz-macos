@@ -25,6 +25,7 @@ message PlayerInput {
         REPORT_VIEWPORT = 10;
         SELECT_CHARACTER = 11;
         START_GAME = 12;
+        RESTART = 13;
     }
     ViewPort view_port = 3;
     int32 character_id = 4;
@@ -39,6 +40,7 @@ message GameStateUpdate {
     int32 level_id = 6;
     bool game_started = 7;
     repeated int32 character_ids = 8;
+    bool game_over = 9;
 }
 
 message PlayerState {

@@ -16,7 +16,15 @@ struct ContentView: View {
                         scene.deactivateClient()
                     }
             }
-            if !scene.clientOkay {
+            if scene.gameOver {
+                VStack {
+                    Text("Game Over")
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background {
+                    Color.black.opacity(0.5)
+                }
+            } else if !scene.clientOkay {
                 VStack {
                     Button("Connect") {
                         scene.activateClient()

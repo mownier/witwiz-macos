@@ -26,16 +26,19 @@ class GameScene: SKScene, ObservableObject {
     @Published var clientOkay: Bool = false
     @Published var gameStarted: Bool = false
     @Published var selectCharacter: Bool = false
+    @Published var gameOver: Bool = false
     
     func setSize(_ value: CGSize) -> GameScene {
-        size = value
-        if let viewPort = worldViewPort {
-            size.width = min(viewPort.width.cgFloat, size.width)
-            size.height = min(viewPort.height.cgFloat, size.height)
-        }
         scaleMode = .aspectFit
-        if let playerID = yourId {
-            sendViewPort(playerID)
+        if value != size {
+            size = value
+            if let viewPort = worldViewPort {
+                size.width = min(viewPort.width.cgFloat, size.width)
+                size.height = min(viewPort.height.cgFloat, size.height)
+            }
+            if let playerID = yourId {
+                sendViewPort(playerID)
+            }
         }
         return self
     }
@@ -196,6 +199,9 @@ class GameScene: SKScene, ObservableObject {
         if gameStarted != state.gameStarted {
             gameStarted = state.gameStarted
         }
+        if gameOver != state.gameOver {
+            gameOver = state.gameOver
+        }
         if state.hasWorldOffset {
             worldOffsetX = state.worldOffset.x.cgFloat
         }
@@ -231,8 +237,12 @@ class GameScene: SKScene, ObservableObject {
         }
         if let viewPort = worldViewPort {
             if let node = childNode(withName: "world_background") as? SKSpriteNode {
-                node.position.x = worldOffsetX * -1
-            } else {
+                if state.gameOver {
+                    node.removeFromParent()
+                } else {
+                    node.position.x = worldOffsetX * -1
+                }
+            } else if !state.gameOver {
                 size.width = min(viewPort.width.cgFloat, size.width)
                 size.height = min(viewPort.height.cgFloat, size.height)
                 let worldSize = CGSize(width: viewPort.width.cgFloat, height: viewPort.height.cgFloat)
@@ -249,17 +259,21 @@ class GameScene: SKScene, ObservableObject {
                 needCharacterSelection = false
             }
             if let node = childNode(withName: "player\(player.playerID)") as? SKSpriteNode, !needCharacterSelection {
-                let pos = CGPoint(x: player.position.x.cgFloat, y: player.position.y.cgFloat)
-                node.position = pos
-                switch player.characterID {
-                case 1: node.color = .blue
-                case 2: node.color = .orange
-                case 3: node.color = .red
-                case 4: node.color = .magenta
-                case 5: node.color = .cyan
-                default: node.color = .black
+                if state.gameOver {
+                    node.removeFromParent()
+                } else {
+                    let pos = CGPoint(x: player.position.x.cgFloat, y: player.position.y.cgFloat)
+                    node.position = pos
+                    switch player.characterID {
+                    case 1: node.color = .blue
+                    case 2: node.color = .orange
+                    case 3: node.color = .red
+                    case 4: node.color = .magenta
+                    case 5: node.color = .cyan
+                    default: node.color = .black
+                    }
                 }
-            } else {
+            } else if !state.gameOver {
                 if player.playerID == yourId {
                     if needCharacterSelection != selectCharacter {
                         selectCharacter = needCharacterSelection
