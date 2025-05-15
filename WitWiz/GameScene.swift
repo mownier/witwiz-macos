@@ -8,10 +8,11 @@ import GRPCNIOTransportHTTP2
 class GameScene: SKScene, ObservableObject {
     var yourId: Int32?
     var levelID: Int32?
-    var gameState: Witwiz_GameStateUpdate?
     var connectClientTask: Task<Void, Error>?
     var processGameStateTask: Task<Void, Error>?
+    var joinGameOkTask: Task<Void, Error>?
     var worldViewPort: Witwiz_ViewPort?
+    var characterIds: [Int32] = []
     
     var playerInputContinuation: AsyncStream<Witwiz_PlayerInput>.Continuation?
     
@@ -23,6 +24,8 @@ class GameScene: SKScene, ObservableObject {
     var worldOffsetX: CGFloat = 0
     
     @Published var clientOkay: Bool = false
+    @Published var gameStarted: Bool = false
+    @Published var selectCharacter: Bool = false
     
     func setSize(_ value: CGSize) -> GameScene {
         size = value
@@ -104,6 +107,7 @@ class GameScene: SKScene, ObservableObject {
     }
     
     func activateClient() {
+        joinGameOkTask?.cancel()
         processGameStateTask?.cancel()
         connectClientTask?.cancel()
         connectClientTask = Task {
@@ -112,43 +116,86 @@ class GameScene: SKScene, ObservableObject {
             } catch {
                 clientOkay = false
             }
+            joinGameOkTask?.cancel()
+            processGameStateTask?.cancel()
+            processGameStateTask = nil
+            joinGameOkTask = nil
+            if let yourId = yourId {
+                childNode(withName: "player\(yourId)")?.removeFromParent()
+                childNode(withName: "world_background")?.removeFromParent()
+            }
+            yourId = nil
+            connectClientTask = nil
+            worldViewPort = nil
+            playerInputContinuation = nil
+            characterIds = []
+            gameStarted = false
+            selectCharacter = false
         }
-        clientOkay = true
     }
     
     func deactivateClient() {
-        connectClientTask?.cancel()
+        joinGameOkTask?.cancel()
         processGameStateTask?.cancel()
-        connectClientTask = nil
+        connectClientTask?.cancel()
+        joinGameOkTask = nil
         processGameStateTask = nil
+        connectClientTask = nil
+    }
+    
+    func triggerGameStart() {
+        guard let playerID = yourId else {
+            return
+        }
+        var input = Witwiz_PlayerInput()
+        input.playerID = playerID
+        input.action = .startGame
+        playerInputContinuation?.yield(input)
+    }
+    
+    func selectCharacter(_ characterID: Int32) {
+        guard let playerID = yourId else {
+            return
+        }
+        var input = Witwiz_PlayerInput()
+        input.playerID = playerID
+        input.action = .selectCharacter
+        input.characterID = characterID
+        playerInputContinuation?.yield(input)
     }
     
     private func connectClient() async throws {
         let (gsStream, gsContinuation) = AsyncStream<Witwiz_GameStateUpdate>.makeStream()
         let (piStream, piContinuation) = AsyncStream<Witwiz_PlayerInput>.makeStream()
+        let (okStream, okContinuation) = AsyncStream<Bool>.makeStream()
         playerInputContinuation = piContinuation
         processGameStateTask?.cancel()
         processGameStateTask = Task {
             for try await state in gsStream {
+                if Task.isCancelled {
+                    break
+                }
                 processGameState(state)
             }
         }
-        let client = await WitWizClient().host("192.168.1.6").port(40041).useTLS(false)
-        try await client.joinGame(piStream, gsContinuation)
-        processGameStateTask?.cancel()
-        processGameStateTask = nil
-        if let yourId = yourId {
-            childNode(withName: "player\(yourId)")?.removeFromParent()
+        joinGameOkTask?.cancel()
+        joinGameOkTask = Task {
+            for try await ok in okStream {
+                if Task.isCancelled {
+                    break
+                }
+                clientOkay = ok
+                break
+            }
         }
-        gameState = nil
-        yourId = nil
-        connectClientTask = nil
-        worldViewPort = nil
-        playerInputContinuation = nil
+        let client = await WitWizClient().host("192.168.1.6").port(40041).useTLS(false)
+        try await client.joinGame(piStream, gsContinuation, okContinuation)
     }
     
     private func processGameState(_ state: Witwiz_GameStateUpdate) {
-        gameState = state
+        if gameStarted != state.gameStarted {
+            gameStarted = state.gameStarted
+        }
         if state.hasWorldOffset {
             worldOffsetX = state.worldOffset.x.cgFloat
         }
@@ -163,6 +210,25 @@ class GameScene: SKScene, ObservableObject {
             levelID = state.levelID
             childNode(withName: "world_background")?.removeFromParent()
         }
+        if characterIds.isEmpty {
+            characterIds = state.characterIds
+        }
+        if !gameStarted {
+            state.players.forEach { player in
+                if player.playerID == yourId {
+                    if player.characterID < 1 {
+                        if !selectCharacter {
+                            selectCharacter = true
+                        }
+                    } else {
+                        if selectCharacter {
+                            selectCharacter = false
+                        }
+                    }
+                }
+            }
+            return
+        }
         if let viewPort = worldViewPort {
             if let node = childNode(withName: "world_background") as? SKSpriteNode {
                 node.position.x = worldOffsetX * -1
@@ -176,25 +242,46 @@ class GameScene: SKScene, ObservableObject {
             }
         }
         state.players.forEach { player in
-            if let node = childNode(withName: "player\(player.playerID)") {
+            let needCharacterSelection: Bool
+            if player.characterID < 1 {
+                needCharacterSelection = true
+            } else {
+                needCharacterSelection = false
+            }
+            if let node = childNode(withName: "player\(player.playerID)") as? SKSpriteNode, !needCharacterSelection {
                 let pos = CGPoint(x: player.position.x.cgFloat, y: player.position.y.cgFloat)
                 node.position = pos
-            } else {
-                let size = CGSize(width: player.boundingBox.width.cgFloat, height: player.boundingBox.height.cgFloat)
-                let position = CGPoint(x: player.position.x.cgFloat, y: player.position.y.cgFloat)
-                let node = SKSpriteNode.make()
-                node.size = size
-                node.position = position
-                node.name = "player\(player.playerID)"
-                if player.playerID == 1 {
-                    node.color = .blue
-                } else if player.playerID == 2 {
-                    node.color = .orange
-                } else {
-                    node.color = .red
+                switch player.characterID {
+                case 1: node.color = .blue
+                case 2: node.color = .orange
+                case 3: node.color = .red
+                case 4: node.color = .magenta
+                case 5: node.color = .cyan
+                default: node.color = .black
                 }
-                node.position = position
-                addChild(node)
+            } else {
+                if player.playerID == yourId {
+                    if needCharacterSelection != selectCharacter {
+                        selectCharacter = needCharacterSelection
+                    }
+                }
+                if !needCharacterSelection {
+                    let size = CGSize(width: player.boundingBox.width.cgFloat, height: player.boundingBox.height.cgFloat)
+                    let position = CGPoint(x: player.position.x.cgFloat, y: player.position.y.cgFloat)
+                    let node = SKSpriteNode.make()
+                    node.size = size
+                    node.position = position
+                    node.name = "player\(player.playerID)"
+                    switch player.characterID {
+                    case 1: node.color = .blue
+                    case 2: node.color = .orange
+                    case 3: node.color = .red
+                    case 4: node.color = .magenta
+                    case 5: node.color = .cyan
+                    default: node.color = .black
+                    }
+                    addChild(node)
+                }
             }
         }
     }

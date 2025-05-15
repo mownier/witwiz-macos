@@ -23,8 +23,11 @@ message PlayerInput {
         MOVE_DOWN_STOP = 8;
         SHOOT = 9;
         REPORT_VIEWPORT = 10;
+        SELECT_CHARACTER = 11;
+        START_GAME = 12;
     }
     ViewPort view_port = 3;
+    int32 character_id = 4;
 }
 
 message GameStateUpdate {
@@ -34,6 +37,8 @@ message GameStateUpdate {
     ViewPort world_view_port = 4;
     Vector2 world_offset = 5;
     int32 level_id = 6;
+    bool game_started = 7;
+    repeated int32 character_ids = 8;
 }
 
 message PlayerState {
@@ -44,6 +49,7 @@ message PlayerState {
     BoundingBox boundingBox = 5;
     float maxSpeed = 6;
     Vector2 targetVelocity = 7;
+    int32 character_id = 8;
 }
 
 message ProjectileState {

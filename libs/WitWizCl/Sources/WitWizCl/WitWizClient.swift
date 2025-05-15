@@ -32,7 +32,8 @@ public actor WitWizClient {
     
     public func joinGame(
         _ playerInputStream: AsyncStream<Witwiz_PlayerInput>,
-        _ gameStateContinuation: AsyncStream<Witwiz_GameStateUpdate>.Continuation
+        _ gameStateContinuation: AsyncStream<Witwiz_GameStateUpdate>.Continuation,
+        _ okContination: AsyncStream<Bool>.Continuation
     ) async throws {
         try await withGRPCClient(
             transport: .http2NIOPosix(
@@ -50,6 +51,7 @@ public actor WitWizClient {
                     }
                 }
                 try await client.joinGame(request: request) { stream in
+                    okContination.yield(true)
                     for try await update in try await stream.messages {
                         if Task.isCancelled {
                             throw Errors.cancelled

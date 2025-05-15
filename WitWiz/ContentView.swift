@@ -17,8 +17,37 @@ struct ContentView: View {
                     }
             }
             if !scene.clientOkay {
-                Button("Connect") {
-                    scene.activateClient()
+                VStack {
+                    Button("Connect") {
+                        scene.activateClient()
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background {
+                    Color.black.opacity(0.5)
+                }
+            } else if scene.selectCharacter {
+                VStack {
+                    Text("Select your character")
+                    ForEach(scene.characterIds, id: \.self) { characterID in
+                        Button("Char \(characterID)") {
+                            scene.selectCharacter(characterID)
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background {
+                    Color.black.opacity(0.5)
+                }
+            } else if !scene.gameStarted {
+                VStack {
+                    Button("Start") {
+                        scene.triggerGameStart()
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background {
+                    Color.black.opacity(0.5)
                 }
             }
         }
