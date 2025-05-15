@@ -29,8 +29,6 @@ public struct Witwiz_PlayerInput: Sendable {
 
   public var characterID: Int32 = 0
 
-  public var name: String = String()
-
   public var action: Witwiz_PlayerInput.Action = .none
 
   public var viewPort: Witwiz_ViewPort {
@@ -58,8 +56,7 @@ public struct Witwiz_PlayerInput: Sendable {
     case shoot // = 9
     case reportViewport // = 10
     case selectCharacter // = 11
-    case startGame // = 12
-    case submitName // = 13
+    case pauseResume // = 12
     case UNRECOGNIZED(Int)
 
     public init() {
@@ -80,8 +77,7 @@ public struct Witwiz_PlayerInput: Sendable {
       case 9: self = .shoot
       case 10: self = .reportViewport
       case 11: self = .selectCharacter
-      case 12: self = .startGame
-      case 13: self = .submitName
+      case 12: self = .pauseResume
       default: self = .UNRECOGNIZED(rawValue)
       }
     }
@@ -100,8 +96,7 @@ public struct Witwiz_PlayerInput: Sendable {
       case .shoot: return 9
       case .reportViewport: return 10
       case .selectCharacter: return 11
-      case .startGame: return 12
-      case .submitName: return 13
+      case .pauseResume: return 12
       case .UNRECOGNIZED(let i): return i
       }
     }
@@ -120,8 +115,7 @@ public struct Witwiz_PlayerInput: Sendable {
       .shoot,
       .reportViewport,
       .selectCharacter,
-      .startGame,
-      .submitName,
+      .pauseResume,
     ]
 
   }
@@ -165,6 +159,10 @@ public struct Witwiz_GameStateUpdate: Sendable {
   public var gameStarted: Bool = false
 
   public var gameOver: Bool = false
+
+  public var gamePaused: Bool = false
+
+  public var isInitial: Bool = false
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -341,7 +339,6 @@ extension Witwiz_PlayerInput: SwiftProtobuf.Message, SwiftProtobuf._MessageImple
   public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
     1: .standard(proto: "player_id"),
     2: .standard(proto: "character_id"),
-    3: .same(proto: "name"),
     4: .same(proto: "action"),
     5: .standard(proto: "view_port"),
   ]
@@ -354,7 +351,6 @@ extension Witwiz_PlayerInput: SwiftProtobuf.Message, SwiftProtobuf._MessageImple
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularInt32Field(value: &self.playerID) }()
       case 2: try { try decoder.decodeSingularInt32Field(value: &self.characterID) }()
-      case 3: try { try decoder.decodeSingularStringField(value: &self.name) }()
       case 4: try { try decoder.decodeSingularEnumField(value: &self.action) }()
       case 5: try { try decoder.decodeSingularMessageField(value: &self._viewPort) }()
       default: break
@@ -373,9 +369,6 @@ extension Witwiz_PlayerInput: SwiftProtobuf.Message, SwiftProtobuf._MessageImple
     if self.characterID != 0 {
       try visitor.visitSingularInt32Field(value: self.characterID, fieldNumber: 2)
     }
-    if !self.name.isEmpty {
-      try visitor.visitSingularStringField(value: self.name, fieldNumber: 3)
-    }
     if self.action != .none {
       try visitor.visitSingularEnumField(value: self.action, fieldNumber: 4)
     }
@@ -388,7 +381,6 @@ extension Witwiz_PlayerInput: SwiftProtobuf.Message, SwiftProtobuf._MessageImple
   public static func ==(lhs: Witwiz_PlayerInput, rhs: Witwiz_PlayerInput) -> Bool {
     if lhs.playerID != rhs.playerID {return false}
     if lhs.characterID != rhs.characterID {return false}
-    if lhs.name != rhs.name {return false}
     if lhs.action != rhs.action {return false}
     if lhs._viewPort != rhs._viewPort {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
@@ -410,8 +402,7 @@ extension Witwiz_PlayerInput.Action: SwiftProtobuf._ProtoNameProviding {
     9: .same(proto: "SHOOT"),
     10: .same(proto: "REPORT_VIEWPORT"),
     11: .same(proto: "SELECT_CHARACTER"),
-    12: .same(proto: "START_GAME"),
-    13: .same(proto: "SUBMIT_NAME"),
+    12: .same(proto: "PAUSE_RESUME"),
   ]
 }
 
@@ -426,6 +417,8 @@ extension Witwiz_GameStateUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageI
     6: .standard(proto: "level_id"),
     7: .standard(proto: "game_started"),
     8: .standard(proto: "game_over"),
+    9: .standard(proto: "game_paused"),
+    10: .standard(proto: "is_initial"),
   ]
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
@@ -442,6 +435,8 @@ extension Witwiz_GameStateUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageI
       case 6: try { try decoder.decodeSingularInt32Field(value: &self.levelID) }()
       case 7: try { try decoder.decodeSingularBoolField(value: &self.gameStarted) }()
       case 8: try { try decoder.decodeSingularBoolField(value: &self.gameOver) }()
+      case 9: try { try decoder.decodeSingularBoolField(value: &self.gamePaused) }()
+      case 10: try { try decoder.decodeSingularBoolField(value: &self.isInitial) }()
       default: break
       }
     }
@@ -476,6 +471,12 @@ extension Witwiz_GameStateUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageI
     if self.gameOver != false {
       try visitor.visitSingularBoolField(value: self.gameOver, fieldNumber: 8)
     }
+    if self.gamePaused != false {
+      try visitor.visitSingularBoolField(value: self.gamePaused, fieldNumber: 9)
+    }
+    if self.isInitial != false {
+      try visitor.visitSingularBoolField(value: self.isInitial, fieldNumber: 10)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -488,6 +489,8 @@ extension Witwiz_GameStateUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageI
     if lhs.levelID != rhs.levelID {return false}
     if lhs.gameStarted != rhs.gameStarted {return false}
     if lhs.gameOver != rhs.gameOver {return false}
+    if lhs.gamePaused != rhs.gamePaused {return false}
+    if lhs.isInitial != rhs.isInitial {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

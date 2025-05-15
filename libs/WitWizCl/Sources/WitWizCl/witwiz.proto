@@ -11,7 +11,6 @@ service WitWiz {
 message PlayerInput {
     int32 player_id = 1;
     int32 character_id = 2;
-    string name = 3;
     Action action = 4;
     ViewPort view_port = 5;
     enum Action {
@@ -27,8 +26,7 @@ message PlayerInput {
         SHOOT = 9;
         REPORT_VIEWPORT = 10;
         SELECT_CHARACTER = 11;
-        START_GAME = 12;
-        SUBMIT_NAME = 13;
+        PAUSE_RESUME = 12;
     }
 }
 
@@ -41,6 +39,8 @@ message GameStateUpdate {
     int32 level_id = 6;
     bool game_started = 7;
     bool game_over = 8;
+    bool game_paused = 9;
+    bool is_initial = 10;
 }
 
 message PlayerState {

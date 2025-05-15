@@ -6,12 +6,14 @@ import GRPCCore
 import GRPCNIOTransportHTTP2
 
 class GameScene: SKScene, ObservableObject {
-    var yourId: Int32?
-    var levelID: Int32?
     var connectClientTask: Task<Void, Error>?
     var processGameStateTask: Task<Void, Error>?
     var joinGameOkTask: Task<Void, Error>?
-    var worldViewPort: Witwiz_ViewPort?
+    
+    var yourID: Int32 = 0
+    var levelID: Int32 = 0
+    var worldOffsetX: CGFloat = 0
+    var worldViewPort: Witwiz_ViewPort = Witwiz_ViewPort()
     var characterIds: [Int32] = []
     var playerIds: Set<Int32> = []
     
@@ -22,25 +24,21 @@ class GameScene: SKScene, ObservableObject {
     var moveRightKeyPressed: Bool = false
     var moveLeftKeyPressed: Bool = false
     
-    var worldOffsetX: CGFloat = 0
-    
     @Published var clientOkay: Bool = false
     @Published var gameStarted: Bool = false
     @Published var selectCharacter: Bool = false
     @Published var gameOver: Bool = false
+    @Published var gamePaused: Bool = false
     
     func setSize(_ value: CGSize) -> GameScene {
         scaleMode = .aspectFit
-        if value != size {
-            size = value
-            if let viewPort = worldViewPort {
-                size.width = min(viewPort.width.cgFloat, size.width)
-                size.height = min(viewPort.height.cgFloat, size.height)
-            }
-            if let playerID = yourId {
-                sendViewPort(playerID)
-            }
+        if value == size {
+            return self
         }
+        size = value
+        size.width = min(worldViewPort.width.cgFloat, size.width)
+        size.height = min(worldViewPort.height.cgFloat, size.height)
+        sendViewPort()
         return self
     }
     
@@ -54,25 +52,30 @@ class GameScene: SKScene, ObservableObject {
             moveUpKeyPressed = true
             var input = Witwiz_PlayerInput()
             input.action = .moveUpStart
-            input.playerID = yourId ?? -1
+            input.playerID = yourID
             playerInputContinuation?.yield(input)
         case 0 where !moveLeftKeyPressed: // a
             moveLeftKeyPressed = true
             var input = Witwiz_PlayerInput()
             input.action = .moveLeftStart
-            input.playerID = yourId ?? -1
+            input.playerID = yourID
             playerInputContinuation?.yield(input)
         case 1 where !moveDownKeyPressed: // s
             moveDownKeyPressed = true
             var input = Witwiz_PlayerInput()
             input.action = .moveDownStart
-            input.playerID = yourId ?? -1
+            input.playerID = yourID
             playerInputContinuation?.yield(input)
         case 2 where !moveRightKeyPressed: // d
             moveRightKeyPressed = true
             var input = Witwiz_PlayerInput()
             input.action = .moveRightStart
-            input.playerID = yourId ?? -1
+            input.playerID = yourID
+            playerInputContinuation?.yield(input)
+        case 49: // space bar
+            var input = Witwiz_PlayerInput()
+            input.action = .pauseResume
+            input.playerID = yourID
             playerInputContinuation?.yield(input)
         default:
             break
@@ -85,25 +88,25 @@ class GameScene: SKScene, ObservableObject {
             moveUpKeyPressed = false
             var input = Witwiz_PlayerInput()
             input.action = .moveUpStop
-            input.playerID = yourId ?? -1
+            input.playerID = yourID
             playerInputContinuation?.yield(input)
         case 0 where moveLeftKeyPressed: // a
             moveLeftKeyPressed = false
             var input = Witwiz_PlayerInput()
             input.action = .moveLeftStop
-            input.playerID = yourId ?? -1
+            input.playerID = yourID
             playerInputContinuation?.yield(input)
         case 1 where moveDownKeyPressed: // s
             moveDownKeyPressed = false
             var input = Witwiz_PlayerInput()
             input.action = .moveDownStop
-            input.playerID = yourId ?? -1
+            input.playerID = yourID
             playerInputContinuation?.yield(input)
         case 2 where moveRightKeyPressed: // d
             moveRightKeyPressed = false
             var input = Witwiz_PlayerInput()
             input.action = .moveRightStop
-            input.playerID = yourId ?? -1
+            input.playerID = yourID
             playerInputContinuation?.yield(input)
         default:
             break
@@ -111,62 +114,78 @@ class GameScene: SKScene, ObservableObject {
     }
     
     func activateClient() {
-        joinGameOkTask?.cancel()
-        processGameStateTask?.cancel()
         connectClientTask?.cancel()
         connectClientTask = Task {
             do {
                 try await connectClient()
             } catch {
-                clientOkay = false
+                updateClientOkay(false)
             }
+            childNode(withName: "player\(yourID)")?.removeFromParent()
+            childNode(withName: "world_background")?.removeFromParent()
             joinGameOkTask?.cancel()
             processGameStateTask?.cancel()
-            processGameStateTask = nil
             joinGameOkTask = nil
-            if let yourId = yourId {
-                childNode(withName: "player\(yourId)")?.removeFromParent()
-                childNode(withName: "world_background")?.removeFromParent()
-            }
-            yourId = nil
+            processGameStateTask = nil
             connectClientTask = nil
-            worldViewPort = nil
             playerInputContinuation = nil
+            worldViewPort = Witwiz_ViewPort()
             characterIds = []
-            gameStarted = false
-            selectCharacter = false
             playerIds = []
+            updateGameStarted(false)
+            updateSelectCharacter(false)
         }
     }
     
     func deactivateClient() {
-        joinGameOkTask?.cancel()
-        processGameStateTask?.cancel()
         connectClientTask?.cancel()
-        joinGameOkTask = nil
-        processGameStateTask = nil
         connectClientTask = nil
     }
     
-    func triggerGameStart() {
-        guard let playerID = yourId else {
-            return
-        }
-        var input = Witwiz_PlayerInput()
-        input.playerID = playerID
-        input.action = .startGame
-        playerInputContinuation?.yield(input)
-    }
-    
     func selectCharacter(_ characterID: Int32) {
-        guard let playerID = yourId else {
+        if yourID == 0 {
             return
         }
         var input = Witwiz_PlayerInput()
-        input.playerID = playerID
+        input.playerID = yourID
         input.action = .selectCharacter
         input.characterID = characterID
         playerInputContinuation?.yield(input)
+    }
+    
+    private func updateClientOkay(_ value: Bool) {
+        if clientOkay == value {
+            return
+        }
+        clientOkay = value
+    }
+    
+    private func updateGameStarted(_ value: Bool) {
+        if gameStarted == value {
+            return
+        }
+        gameStarted = value
+    }
+    
+    private func updateSelectCharacter(_ value: Bool) {
+        if selectCharacter == value {
+            return
+        }
+        selectCharacter = value
+    }
+    
+    private func updateGameOver(_ value: Bool) {
+        if gameOver == value {
+            return
+        }
+        gameOver = value
+    }
+    
+    private func updateGamePaused(_ value: Bool) {
+        if gamePaused == value {
+            return
+        }
+        gamePaused = value
     }
     
     private func connectClient() async throws {
@@ -189,7 +208,7 @@ class GameScene: SKScene, ObservableObject {
                 if Task.isCancelled {
                     break
                 }
-                clientOkay = ok
+                updateClientOkay(ok)
                 break
             }
         }
@@ -198,107 +217,58 @@ class GameScene: SKScene, ObservableObject {
     }
     
     private func processGameState(_ state: Witwiz_GameStateUpdate) {
-        if gameStarted != state.gameStarted {
-            gameStarted = state.gameStarted
-        }
-        if gameOver != state.gameOver {
-            gameOver = state.gameOver
-        }
-        if state.hasWorldOffset {
-            worldOffsetX = state.worldOffset.x.cgFloat
-        }
-        if yourId == nil && state.yourPlayerID != 0 {
-            yourId = state.yourPlayerID
-            sendViewPort(state.yourPlayerID)
-        }
-        if state.hasWorldViewPort {
-            worldViewPort = state.worldViewPort
-        }
-        if state.levelID != 0 && levelID != state.levelID {
-            levelID = state.levelID
-            childNode(withName: "world_background")?.removeFromParent()
-        }
-        if characterIds.isEmpty {
-            characterIds = state.characterIds
-        }
-        if !gameStarted {
+        if state.isInitial {
             state.players.forEach { player in
-                if player.playerID == yourId {
-                    if player.characterID < 1 {
-                        if !selectCharacter {
-                            selectCharacter = true
-                        }
-                    } else {
-                        if selectCharacter {
-                            selectCharacter = false
-                        }
-                    }
-                }
+                yourID = player.playerID
             }
             return
         }
-        if let viewPort = worldViewPort {
-            if let node = childNode(withName: "world_background") as? SKSpriteNode {
-                if state.gameOver {
-                    node.removeFromParent()
-                } else {
-                    node.position.x = worldOffsetX * -1
-                }
-            } else if !state.gameOver {
-                size.width = min(viewPort.width.cgFloat, size.width)
-                size.height = min(viewPort.height.cgFloat, size.height)
-                let worldSize = CGSize(width: viewPort.width.cgFloat, height: viewPort.height.cgFloat)
-                if let levelID = levelID {
-                    createGameLevel(levelID: levelID, size: worldSize)
-                }
+        updateGameStarted(state.gameStarted)
+        updateGameOver(state.gameOver)
+        updateGamePaused(state.gamePaused)
+        worldOffsetX = state.worldOffset.x.cgFloat
+        worldViewPort = state.worldViewPort
+        if levelID != state.levelID {
+            childNode(withName: "world_background")?.removeFromParent()
+        }
+        levelID = state.levelID
+        characterIds = state.characterIds
+        if !state.gameStarted {
+            if let player = state.players.withID(yourID) {
+                updateSelectCharacter(!characterIds.contains(player.characterID))
             }
+            return
+        }
+        if state.gameOver {
+            childNode(withName: "world_background")?.removeFromParent()
+        } else if let node = childNode(withName: "world_background") as? SKSpriteNode {
+            node.position.x = worldOffsetX * -1
+        } else {
+            size.width = min(worldViewPort.width.cgFloat, size.width)
+            size.height = min(worldViewPort.height.cgFloat, size.height)
+            createGameLevel()
         }
         state.players.forEach { player in
-            let needCharacterSelection: Bool
-            if player.characterID < 1 {
-                needCharacterSelection = true
-            } else {
-                needCharacterSelection = false
+            if state.gameOver {
+                childNode(withName: "player\(player.playerID)")?.removeFromParent()
+                return
             }
-            if let node = childNode(withName: "player\(player.playerID)") as? SKSpriteNode, !needCharacterSelection {
-                if state.gameOver {
-                    node.removeFromParent()
-                } else {
-                    let pos = CGPoint(x: player.position.x.cgFloat, y: player.position.y.cgFloat)
-                    node.position = pos
-                    switch player.characterID {
-                    case 1: node.color = .blue
-                    case 2: node.color = .orange
-                    case 3: node.color = .red
-                    case 4: node.color = .magenta
-                    case 5: node.color = .cyan
-                    default: node.color = .black
-                    }
-                }
-            } else if !state.gameOver {
-                if player.playerID == yourId {
-                    if needCharacterSelection != selectCharacter {
-                        selectCharacter = needCharacterSelection
-                    }
-                }
-                if !needCharacterSelection {
-                    let size = CGSize(width: player.boundingBox.width.cgFloat, height: player.boundingBox.height.cgFloat)
-                    let position = CGPoint(x: player.position.x.cgFloat, y: player.position.y.cgFloat)
-                    let node = SKSpriteNode.make()
-                    node.size = size
-                    node.position = position
-                    node.name = "player\(player.playerID)"
-                    switch player.characterID {
-                    case 1: node.color = .blue
-                    case 2: node.color = .orange
-                    case 3: node.color = .red
-                    case 4: node.color = .magenta
-                    case 5: node.color = .cyan
-                    default: node.color = .black
-                    }
-                    addChild(node)
-                    playerIds.insert(player.playerID)
-                }
+            if player.playerID == yourID {
+                updateSelectCharacter(!characterIds.contains(player.characterID))
+            }
+            if let node = childNode(withName: "player\(player.playerID)") as? PlayerSpriteNode {
+                let pos = CGPoint(x: player.position.x.cgFloat, y: player.position.y.cgFloat)
+                node.position = pos
+                node.updateCharacterID(player.characterID)
+            } else {
+                let size = CGSize(width: player.boundingBox.width.cgFloat, height: player.boundingBox.height.cgFloat)
+                let position = CGPoint(x: player.position.x.cgFloat, y: player.position.y.cgFloat)
+                let node = PlayerSpriteNode.make(player.characterID)
+                node.size = size
+                node.position = position
+                node.name = "player\(player.playerID)"
+                addChild(node)
+                playerIds.insert(player.playerID)
             }
         }
         playerIds.forEach { pId in
@@ -308,9 +278,12 @@ class GameScene: SKScene, ObservableObject {
         }
     }
     
-    private func sendViewPort(_ playerID: Int32) {
+    private func sendViewPort() {
+        if yourID == 0 {
+            return
+        }
         var input = Witwiz_PlayerInput()
-        input.playerID = playerID
+        input.playerID = yourID
         input.action = .reportViewport
         input.viewPort = Witwiz_ViewPort()
         input.viewPort.width = size.width.float
@@ -318,7 +291,11 @@ class GameScene: SKScene, ObservableObject {
         playerInputContinuation?.yield(input)
     }
     
-    private func createGameLevel(levelID: Int32, size: CGSize) {
+    private func createGameLevel() {
+        if levelID == 0 {
+            return
+        }
+        let size = CGSize(width: worldViewPort.width.cgFloat, height: worldViewPort.height.cgFloat)
         let gameLevel: SKSpriteNode
         switch levelID {
         case 1: gameLevel = GameLevel1.make(size: size)
@@ -349,6 +326,39 @@ extension SKSpriteNode {
         let node = SKSpriteNode()
         node.anchorPoint.x = 0
         node.anchorPoint.y = 0
+        return node
+    }
+}
+
+extension Array<Witwiz_PlayerState> {
+    func withID(_ playerID: Int32) -> Witwiz_PlayerState? {
+        return first { $0.playerID == playerID }
+    }
+}
+
+class PlayerSpriteNode: SKSpriteNode {
+    private var characterID: Int32 = 0
+    
+    func updateCharacterID(_ value: Int32) {
+        if value == characterID {
+            return
+        }
+        characterID = value
+        switch characterID {
+        case 1: color = .blue
+        case 2: color = .orange
+        case 3: color = .red
+        case 4: color = .magenta
+        case 5: color = .cyan
+        default: color = .clear
+        }
+    }
+    
+    static func make(_ characterID: Int32) -> PlayerSpriteNode {
+        let node = PlayerSpriteNode()
+        node.anchorPoint.x = 0
+        node.anchorPoint.y = 0
+        node.updateCharacterID(characterID)
         return node
     }
 }

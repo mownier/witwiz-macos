@@ -47,17 +47,15 @@ struct ContentView: View {
                 .background {
                     Color.black.opacity(0.5)
                 }
-            } else if !scene.gameStarted {
+            } else if scene.gamePaused {
                 VStack {
-                    Button("Start") {
-                        scene.triggerGameStart()
-                    }
+                    Text("Game Paused")
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background {
                     Color.black.opacity(0.5)
                 }
-            }
+            } 
         }
     }
 }
