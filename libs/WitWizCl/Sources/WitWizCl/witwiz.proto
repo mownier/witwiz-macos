@@ -10,7 +10,10 @@ service WitWiz {
 
 message PlayerInput {
     int32 player_id = 1;
-    Action action = 2;
+    int32 character_id = 2;
+    string name = 3;
+    Action action = 4;
+    ViewPort view_port = 5;
     enum Action {
         NONE = 0;
         MOVE_RIGHT_START = 1;
@@ -25,42 +28,40 @@ message PlayerInput {
         REPORT_VIEWPORT = 10;
         SELECT_CHARACTER = 11;
         START_GAME = 12;
-        RESTART = 13;
+        SUBMIT_NAME = 13;
     }
-    ViewPort view_port = 3;
-    int32 character_id = 4;
 }
 
 message GameStateUpdate {
     repeated PlayerState players = 1;
     repeated ProjectileState projectiles = 2;
-    int32 your_player_id = 3;
+    repeated int32 character_ids = 3;
     ViewPort world_view_port = 4;
     Vector2 world_offset = 5;
     int32 level_id = 6;
     bool game_started = 7;
-    repeated int32 character_ids = 8;
-    bool game_over = 9;
+    bool game_over = 8;
 }
 
 message PlayerState {
     int32 player_id = 1;
-    Vector2 position = 2;
-    Vector2 velocity = 3;
-    Vector2 acceleration = 4;
-    BoundingBox boundingBox = 5;
-    float maxSpeed = 6;
-    Vector2 targetVelocity = 7;
-    int32 character_id = 8;
+    int32 character_id = 2;
+    string name = 3;
+    float maxSpeed = 4;
+    Vector2 position = 5;
+    Vector2 velocity = 6;
+    Vector2 acceleration = 7;
+    Vector2 targetVelocity = 8;
+    BoundingBox boundingBox = 9;
 }
 
 message ProjectileState {
     int32 projectile_id = 1;
     int32 owner_id = 2;
-    Vector2 position = 3;
-    Vector2 velocity = 4;
-    BoundingBox boundingBox = 5;
-    float maxSpeed = 6;
+    float maxSpeed = 3;
+    Vector2 position = 4;
+    Vector2 velocity = 5;
+    BoundingBox boundingBox = 6;
 }
 
 message Vector2 {

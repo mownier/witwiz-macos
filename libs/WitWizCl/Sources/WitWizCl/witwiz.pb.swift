@@ -27,6 +27,10 @@ public struct Witwiz_PlayerInput: Sendable {
 
   public var playerID: Int32 = 0
 
+  public var characterID: Int32 = 0
+
+  public var name: String = String()
+
   public var action: Witwiz_PlayerInput.Action = .none
 
   public var viewPort: Witwiz_ViewPort {
@@ -37,8 +41,6 @@ public struct Witwiz_PlayerInput: Sendable {
   public var hasViewPort: Bool {return self._viewPort != nil}
   /// Clears the value of `viewPort`. Subsequent reads from it will return its default value.
   public mutating func clearViewPort() {self._viewPort = nil}
-
-  public var characterID: Int32 = 0
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -57,7 +59,7 @@ public struct Witwiz_PlayerInput: Sendable {
     case reportViewport // = 10
     case selectCharacter // = 11
     case startGame // = 12
-    case restart // = 13
+    case submitName // = 13
     case UNRECOGNIZED(Int)
 
     public init() {
@@ -79,7 +81,7 @@ public struct Witwiz_PlayerInput: Sendable {
       case 10: self = .reportViewport
       case 11: self = .selectCharacter
       case 12: self = .startGame
-      case 13: self = .restart
+      case 13: self = .submitName
       default: self = .UNRECOGNIZED(rawValue)
       }
     }
@@ -99,7 +101,7 @@ public struct Witwiz_PlayerInput: Sendable {
       case .reportViewport: return 10
       case .selectCharacter: return 11
       case .startGame: return 12
-      case .restart: return 13
+      case .submitName: return 13
       case .UNRECOGNIZED(let i): return i
       }
     }
@@ -119,7 +121,7 @@ public struct Witwiz_PlayerInput: Sendable {
       .reportViewport,
       .selectCharacter,
       .startGame,
-      .restart,
+      .submitName,
     ]
 
   }
@@ -138,7 +140,7 @@ public struct Witwiz_GameStateUpdate: Sendable {
 
   public var projectiles: [Witwiz_ProjectileState] = []
 
-  public var yourPlayerID: Int32 = 0
+  public var characterIds: [Int32] = []
 
   public var worldViewPort: Witwiz_ViewPort {
     get {return _worldViewPort ?? Witwiz_ViewPort()}
@@ -162,8 +164,6 @@ public struct Witwiz_GameStateUpdate: Sendable {
 
   public var gameStarted: Bool = false
 
-  public var characterIds: [Int32] = []
-
   public var gameOver: Bool = false
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -180,6 +180,12 @@ public struct Witwiz_PlayerState: Sendable {
   // methods supported on all messages.
 
   public var playerID: Int32 = 0
+
+  public var characterID: Int32 = 0
+
+  public var name: String = String()
+
+  public var maxSpeed: Float = 0
 
   public var position: Witwiz_Vector2 {
     get {return _position ?? Witwiz_Vector2()}
@@ -208,17 +214,6 @@ public struct Witwiz_PlayerState: Sendable {
   /// Clears the value of `acceleration`. Subsequent reads from it will return its default value.
   public mutating func clearAcceleration() {self._acceleration = nil}
 
-  public var boundingBox: Witwiz_BoundingBox {
-    get {return _boundingBox ?? Witwiz_BoundingBox()}
-    set {_boundingBox = newValue}
-  }
-  /// Returns true if `boundingBox` has been explicitly set.
-  public var hasBoundingBox: Bool {return self._boundingBox != nil}
-  /// Clears the value of `boundingBox`. Subsequent reads from it will return its default value.
-  public mutating func clearBoundingBox() {self._boundingBox = nil}
-
-  public var maxSpeed: Float = 0
-
   public var targetVelocity: Witwiz_Vector2 {
     get {return _targetVelocity ?? Witwiz_Vector2()}
     set {_targetVelocity = newValue}
@@ -228,7 +223,14 @@ public struct Witwiz_PlayerState: Sendable {
   /// Clears the value of `targetVelocity`. Subsequent reads from it will return its default value.
   public mutating func clearTargetVelocity() {self._targetVelocity = nil}
 
-  public var characterID: Int32 = 0
+  public var boundingBox: Witwiz_BoundingBox {
+    get {return _boundingBox ?? Witwiz_BoundingBox()}
+    set {_boundingBox = newValue}
+  }
+  /// Returns true if `boundingBox` has been explicitly set.
+  public var hasBoundingBox: Bool {return self._boundingBox != nil}
+  /// Clears the value of `boundingBox`. Subsequent reads from it will return its default value.
+  public mutating func clearBoundingBox() {self._boundingBox = nil}
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -237,8 +239,8 @@ public struct Witwiz_PlayerState: Sendable {
   fileprivate var _position: Witwiz_Vector2? = nil
   fileprivate var _velocity: Witwiz_Vector2? = nil
   fileprivate var _acceleration: Witwiz_Vector2? = nil
-  fileprivate var _boundingBox: Witwiz_BoundingBox? = nil
   fileprivate var _targetVelocity: Witwiz_Vector2? = nil
+  fileprivate var _boundingBox: Witwiz_BoundingBox? = nil
 }
 
 public struct Witwiz_ProjectileState: Sendable {
@@ -249,6 +251,8 @@ public struct Witwiz_ProjectileState: Sendable {
   public var projectileID: Int32 = 0
 
   public var ownerID: Int32 = 0
+
+  public var maxSpeed: Float = 0
 
   public var position: Witwiz_Vector2 {
     get {return _position ?? Witwiz_Vector2()}
@@ -276,8 +280,6 @@ public struct Witwiz_ProjectileState: Sendable {
   public var hasBoundingBox: Bool {return self._boundingBox != nil}
   /// Clears the value of `boundingBox`. Subsequent reads from it will return its default value.
   public mutating func clearBoundingBox() {self._boundingBox = nil}
-
-  public var maxSpeed: Float = 0
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -338,9 +340,10 @@ extension Witwiz_PlayerInput: SwiftProtobuf.Message, SwiftProtobuf._MessageImple
   public static let protoMessageName: String = _protobuf_package + ".PlayerInput"
   public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
     1: .standard(proto: "player_id"),
-    2: .same(proto: "action"),
-    3: .standard(proto: "view_port"),
-    4: .standard(proto: "character_id"),
+    2: .standard(proto: "character_id"),
+    3: .same(proto: "name"),
+    4: .same(proto: "action"),
+    5: .standard(proto: "view_port"),
   ]
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
@@ -350,9 +353,10 @@ extension Witwiz_PlayerInput: SwiftProtobuf.Message, SwiftProtobuf._MessageImple
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularInt32Field(value: &self.playerID) }()
-      case 2: try { try decoder.decodeSingularEnumField(value: &self.action) }()
-      case 3: try { try decoder.decodeSingularMessageField(value: &self._viewPort) }()
-      case 4: try { try decoder.decodeSingularInt32Field(value: &self.characterID) }()
+      case 2: try { try decoder.decodeSingularInt32Field(value: &self.characterID) }()
+      case 3: try { try decoder.decodeSingularStringField(value: &self.name) }()
+      case 4: try { try decoder.decodeSingularEnumField(value: &self.action) }()
+      case 5: try { try decoder.decodeSingularMessageField(value: &self._viewPort) }()
       default: break
       }
     }
@@ -366,23 +370,27 @@ extension Witwiz_PlayerInput: SwiftProtobuf.Message, SwiftProtobuf._MessageImple
     if self.playerID != 0 {
       try visitor.visitSingularInt32Field(value: self.playerID, fieldNumber: 1)
     }
+    if self.characterID != 0 {
+      try visitor.visitSingularInt32Field(value: self.characterID, fieldNumber: 2)
+    }
+    if !self.name.isEmpty {
+      try visitor.visitSingularStringField(value: self.name, fieldNumber: 3)
+    }
     if self.action != .none {
-      try visitor.visitSingularEnumField(value: self.action, fieldNumber: 2)
+      try visitor.visitSingularEnumField(value: self.action, fieldNumber: 4)
     }
     try { if let v = self._viewPort {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 3)
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 5)
     } }()
-    if self.characterID != 0 {
-      try visitor.visitSingularInt32Field(value: self.characterID, fieldNumber: 4)
-    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Witwiz_PlayerInput, rhs: Witwiz_PlayerInput) -> Bool {
     if lhs.playerID != rhs.playerID {return false}
+    if lhs.characterID != rhs.characterID {return false}
+    if lhs.name != rhs.name {return false}
     if lhs.action != rhs.action {return false}
     if lhs._viewPort != rhs._viewPort {return false}
-    if lhs.characterID != rhs.characterID {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -403,7 +411,7 @@ extension Witwiz_PlayerInput.Action: SwiftProtobuf._ProtoNameProviding {
     10: .same(proto: "REPORT_VIEWPORT"),
     11: .same(proto: "SELECT_CHARACTER"),
     12: .same(proto: "START_GAME"),
-    13: .same(proto: "RESTART"),
+    13: .same(proto: "SUBMIT_NAME"),
   ]
 }
 
@@ -412,13 +420,12 @@ extension Witwiz_GameStateUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageI
   public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
     1: .same(proto: "players"),
     2: .same(proto: "projectiles"),
-    3: .standard(proto: "your_player_id"),
+    3: .standard(proto: "character_ids"),
     4: .standard(proto: "world_view_port"),
     5: .standard(proto: "world_offset"),
     6: .standard(proto: "level_id"),
     7: .standard(proto: "game_started"),
-    8: .standard(proto: "character_ids"),
-    9: .standard(proto: "game_over"),
+    8: .standard(proto: "game_over"),
   ]
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
@@ -429,13 +436,12 @@ extension Witwiz_GameStateUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageI
       switch fieldNumber {
       case 1: try { try decoder.decodeRepeatedMessageField(value: &self.players) }()
       case 2: try { try decoder.decodeRepeatedMessageField(value: &self.projectiles) }()
-      case 3: try { try decoder.decodeSingularInt32Field(value: &self.yourPlayerID) }()
+      case 3: try { try decoder.decodeRepeatedInt32Field(value: &self.characterIds) }()
       case 4: try { try decoder.decodeSingularMessageField(value: &self._worldViewPort) }()
       case 5: try { try decoder.decodeSingularMessageField(value: &self._worldOffset) }()
       case 6: try { try decoder.decodeSingularInt32Field(value: &self.levelID) }()
       case 7: try { try decoder.decodeSingularBoolField(value: &self.gameStarted) }()
-      case 8: try { try decoder.decodeRepeatedInt32Field(value: &self.characterIds) }()
-      case 9: try { try decoder.decodeSingularBoolField(value: &self.gameOver) }()
+      case 8: try { try decoder.decodeSingularBoolField(value: &self.gameOver) }()
       default: break
       }
     }
@@ -452,8 +458,8 @@ extension Witwiz_GameStateUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageI
     if !self.projectiles.isEmpty {
       try visitor.visitRepeatedMessageField(value: self.projectiles, fieldNumber: 2)
     }
-    if self.yourPlayerID != 0 {
-      try visitor.visitSingularInt32Field(value: self.yourPlayerID, fieldNumber: 3)
+    if !self.characterIds.isEmpty {
+      try visitor.visitPackedInt32Field(value: self.characterIds, fieldNumber: 3)
     }
     try { if let v = self._worldViewPort {
       try visitor.visitSingularMessageField(value: v, fieldNumber: 4)
@@ -467,11 +473,8 @@ extension Witwiz_GameStateUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageI
     if self.gameStarted != false {
       try visitor.visitSingularBoolField(value: self.gameStarted, fieldNumber: 7)
     }
-    if !self.characterIds.isEmpty {
-      try visitor.visitPackedInt32Field(value: self.characterIds, fieldNumber: 8)
-    }
     if self.gameOver != false {
-      try visitor.visitSingularBoolField(value: self.gameOver, fieldNumber: 9)
+      try visitor.visitSingularBoolField(value: self.gameOver, fieldNumber: 8)
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -479,12 +482,11 @@ extension Witwiz_GameStateUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageI
   public static func ==(lhs: Witwiz_GameStateUpdate, rhs: Witwiz_GameStateUpdate) -> Bool {
     if lhs.players != rhs.players {return false}
     if lhs.projectiles != rhs.projectiles {return false}
-    if lhs.yourPlayerID != rhs.yourPlayerID {return false}
+    if lhs.characterIds != rhs.characterIds {return false}
     if lhs._worldViewPort != rhs._worldViewPort {return false}
     if lhs._worldOffset != rhs._worldOffset {return false}
     if lhs.levelID != rhs.levelID {return false}
     if lhs.gameStarted != rhs.gameStarted {return false}
-    if lhs.characterIds != rhs.characterIds {return false}
     if lhs.gameOver != rhs.gameOver {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
@@ -495,13 +497,14 @@ extension Witwiz_PlayerState: SwiftProtobuf.Message, SwiftProtobuf._MessageImple
   public static let protoMessageName: String = _protobuf_package + ".PlayerState"
   public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
     1: .standard(proto: "player_id"),
-    2: .same(proto: "position"),
-    3: .same(proto: "velocity"),
-    4: .same(proto: "acceleration"),
-    5: .same(proto: "boundingBox"),
-    6: .same(proto: "maxSpeed"),
-    7: .same(proto: "targetVelocity"),
-    8: .standard(proto: "character_id"),
+    2: .standard(proto: "character_id"),
+    3: .same(proto: "name"),
+    4: .same(proto: "maxSpeed"),
+    5: .same(proto: "position"),
+    6: .same(proto: "velocity"),
+    7: .same(proto: "acceleration"),
+    8: .same(proto: "targetVelocity"),
+    9: .same(proto: "boundingBox"),
   ]
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
@@ -511,13 +514,14 @@ extension Witwiz_PlayerState: SwiftProtobuf.Message, SwiftProtobuf._MessageImple
       // enabled. https://github.com/apple/swift-protobuf/issues/1034
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularInt32Field(value: &self.playerID) }()
-      case 2: try { try decoder.decodeSingularMessageField(value: &self._position) }()
-      case 3: try { try decoder.decodeSingularMessageField(value: &self._velocity) }()
-      case 4: try { try decoder.decodeSingularMessageField(value: &self._acceleration) }()
-      case 5: try { try decoder.decodeSingularMessageField(value: &self._boundingBox) }()
-      case 6: try { try decoder.decodeSingularFloatField(value: &self.maxSpeed) }()
-      case 7: try { try decoder.decodeSingularMessageField(value: &self._targetVelocity) }()
-      case 8: try { try decoder.decodeSingularInt32Field(value: &self.characterID) }()
+      case 2: try { try decoder.decodeSingularInt32Field(value: &self.characterID) }()
+      case 3: try { try decoder.decodeSingularStringField(value: &self.name) }()
+      case 4: try { try decoder.decodeSingularFloatField(value: &self.maxSpeed) }()
+      case 5: try { try decoder.decodeSingularMessageField(value: &self._position) }()
+      case 6: try { try decoder.decodeSingularMessageField(value: &self._velocity) }()
+      case 7: try { try decoder.decodeSingularMessageField(value: &self._acceleration) }()
+      case 8: try { try decoder.decodeSingularMessageField(value: &self._targetVelocity) }()
+      case 9: try { try decoder.decodeSingularMessageField(value: &self._boundingBox) }()
       default: break
       }
     }
@@ -531,39 +535,43 @@ extension Witwiz_PlayerState: SwiftProtobuf.Message, SwiftProtobuf._MessageImple
     if self.playerID != 0 {
       try visitor.visitSingularInt32Field(value: self.playerID, fieldNumber: 1)
     }
+    if self.characterID != 0 {
+      try visitor.visitSingularInt32Field(value: self.characterID, fieldNumber: 2)
+    }
+    if !self.name.isEmpty {
+      try visitor.visitSingularStringField(value: self.name, fieldNumber: 3)
+    }
+    if self.maxSpeed.bitPattern != 0 {
+      try visitor.visitSingularFloatField(value: self.maxSpeed, fieldNumber: 4)
+    }
     try { if let v = self._position {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
-    } }()
-    try { if let v = self._velocity {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 3)
-    } }()
-    try { if let v = self._acceleration {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 4)
-    } }()
-    try { if let v = self._boundingBox {
       try visitor.visitSingularMessageField(value: v, fieldNumber: 5)
     } }()
-    if self.maxSpeed.bitPattern != 0 {
-      try visitor.visitSingularFloatField(value: self.maxSpeed, fieldNumber: 6)
-    }
-    try { if let v = self._targetVelocity {
+    try { if let v = self._velocity {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 6)
+    } }()
+    try { if let v = self._acceleration {
       try visitor.visitSingularMessageField(value: v, fieldNumber: 7)
     } }()
-    if self.characterID != 0 {
-      try visitor.visitSingularInt32Field(value: self.characterID, fieldNumber: 8)
-    }
+    try { if let v = self._targetVelocity {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 8)
+    } }()
+    try { if let v = self._boundingBox {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 9)
+    } }()
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Witwiz_PlayerState, rhs: Witwiz_PlayerState) -> Bool {
     if lhs.playerID != rhs.playerID {return false}
+    if lhs.characterID != rhs.characterID {return false}
+    if lhs.name != rhs.name {return false}
+    if lhs.maxSpeed != rhs.maxSpeed {return false}
     if lhs._position != rhs._position {return false}
     if lhs._velocity != rhs._velocity {return false}
     if lhs._acceleration != rhs._acceleration {return false}
-    if lhs._boundingBox != rhs._boundingBox {return false}
-    if lhs.maxSpeed != rhs.maxSpeed {return false}
     if lhs._targetVelocity != rhs._targetVelocity {return false}
-    if lhs.characterID != rhs.characterID {return false}
+    if lhs._boundingBox != rhs._boundingBox {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -574,10 +582,10 @@ extension Witwiz_ProjectileState: SwiftProtobuf.Message, SwiftProtobuf._MessageI
   public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
     1: .standard(proto: "projectile_id"),
     2: .standard(proto: "owner_id"),
-    3: .same(proto: "position"),
-    4: .same(proto: "velocity"),
-    5: .same(proto: "boundingBox"),
-    6: .same(proto: "maxSpeed"),
+    3: .same(proto: "maxSpeed"),
+    4: .same(proto: "position"),
+    5: .same(proto: "velocity"),
+    6: .same(proto: "boundingBox"),
   ]
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
@@ -588,10 +596,10 @@ extension Witwiz_ProjectileState: SwiftProtobuf.Message, SwiftProtobuf._MessageI
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularInt32Field(value: &self.projectileID) }()
       case 2: try { try decoder.decodeSingularInt32Field(value: &self.ownerID) }()
-      case 3: try { try decoder.decodeSingularMessageField(value: &self._position) }()
-      case 4: try { try decoder.decodeSingularMessageField(value: &self._velocity) }()
-      case 5: try { try decoder.decodeSingularMessageField(value: &self._boundingBox) }()
-      case 6: try { try decoder.decodeSingularFloatField(value: &self.maxSpeed) }()
+      case 3: try { try decoder.decodeSingularFloatField(value: &self.maxSpeed) }()
+      case 4: try { try decoder.decodeSingularMessageField(value: &self._position) }()
+      case 5: try { try decoder.decodeSingularMessageField(value: &self._velocity) }()
+      case 6: try { try decoder.decodeSingularMessageField(value: &self._boundingBox) }()
       default: break
       }
     }
@@ -608,28 +616,28 @@ extension Witwiz_ProjectileState: SwiftProtobuf.Message, SwiftProtobuf._MessageI
     if self.ownerID != 0 {
       try visitor.visitSingularInt32Field(value: self.ownerID, fieldNumber: 2)
     }
+    if self.maxSpeed.bitPattern != 0 {
+      try visitor.visitSingularFloatField(value: self.maxSpeed, fieldNumber: 3)
+    }
     try { if let v = self._position {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 3)
-    } }()
-    try { if let v = self._velocity {
       try visitor.visitSingularMessageField(value: v, fieldNumber: 4)
     } }()
-    try { if let v = self._boundingBox {
+    try { if let v = self._velocity {
       try visitor.visitSingularMessageField(value: v, fieldNumber: 5)
     } }()
-    if self.maxSpeed.bitPattern != 0 {
-      try visitor.visitSingularFloatField(value: self.maxSpeed, fieldNumber: 6)
-    }
+    try { if let v = self._boundingBox {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 6)
+    } }()
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Witwiz_ProjectileState, rhs: Witwiz_ProjectileState) -> Bool {
     if lhs.projectileID != rhs.projectileID {return false}
     if lhs.ownerID != rhs.ownerID {return false}
+    if lhs.maxSpeed != rhs.maxSpeed {return false}
     if lhs._position != rhs._position {return false}
     if lhs._velocity != rhs._velocity {return false}
     if lhs._boundingBox != rhs._boundingBox {return false}
-    if lhs.maxSpeed != rhs.maxSpeed {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
