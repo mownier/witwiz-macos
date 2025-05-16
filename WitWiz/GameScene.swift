@@ -5,7 +5,10 @@ import WitWizCl
 import GRPCCore
 import GRPCNIOTransportHTTP2
 
+let characterTextureAtlas = SKTextureAtlas(named: "Character")
+
 class GameScene: SKScene, ObservableObject {
+    
     var connectClientTask: Task<Void, Error>?
     var processGameStateTask: Task<Void, Error>?
     var joinGameOkTask: Task<Void, Error>?
@@ -270,10 +273,8 @@ class GameScene: SKScene, ObservableObject {
                 node.position = pos
                 node.updateCharacterID(player.characterID)
             } else {
-                let size = CGSize(width: player.boundingBox.width.cgFloat, height: player.boundingBox.height.cgFloat)
                 let position = CGPoint(x: player.position.x.cgFloat, y: player.position.y.cgFloat)
                 let node = PlayerSpriteNode.make(player.characterID)
-                node.size = size
                 node.position = position
                 node.name = "player\(player.playerID)"
                 addChild(node)
@@ -352,15 +353,9 @@ class PlayerSpriteNode: SKSpriteNode {
         if value == characterID {
             return
         }
-        characterID = value
-        switch characterID {
-        case 1: color = .blue
-        case 2: color = .orange
-        case 3: color = .red
-        case 4: color = .magenta
-        case 5: color = .cyan
-        default: color = .clear
-        }
+        let newTexture = characterTextureAtlas.textureNamed("base_charac_\(value)")
+        texture = newTexture
+        size = newTexture.size()
     }
     
     static func make(_ characterID: Int32) -> PlayerSpriteNode {
