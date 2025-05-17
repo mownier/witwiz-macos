@@ -12,7 +12,6 @@ message PlayerInput {
     int32 player_id = 1;
     int32 character_id = 2;
     Action action = 4;
-    ViewPort view_port = 5;
     enum Action {
         NONE = 0;
         MOVE_RIGHT_START = 1;
@@ -24,44 +23,30 @@ message PlayerInput {
         MOVE_DOWN_START = 7;
         MOVE_DOWN_STOP = 8;
         SHOOT = 9;
-        REPORT_VIEWPORT = 10;
-        SELECT_CHARACTER = 11;
-        PAUSE_RESUME = 12;
+        SELECT_CHARACTER = 10;
+        PAUSE_RESUME = 11;
     }
 }
 
 message GameStateUpdate {
-    repeated PlayerState players = 1;
-    repeated ProjectileState projectiles = 2;
-    repeated int32 character_ids = 3;
-    ViewPort world_view_port = 4;
-    Vector2 world_offset = 5;
-    int32 level_id = 6;
-    bool game_started = 7;
-    bool game_over = 8;
-    bool game_paused = 9;
-    bool is_initial = 10;
+    int32 level_id = 1;
+    bool game_started = 2;
+    bool game_over = 3;
+    bool game_paused = 4;
+    bool is_initial = 5;
+    ViewPortBounds player_view_port_bounds = 6;
+    repeated int32 character_ids = 7;
+    repeated PlayerState players = 8;
 }
 
 message PlayerState {
     int32 player_id = 1;
     int32 character_id = 2;
-    string name = 3;
-    float maxSpeed = 4;
-    Vector2 position = 5;
-    Vector2 velocity = 6;
-    Vector2 acceleration = 7;
-    Vector2 targetVelocity = 8;
-    BoundingBox boundingBox = 9;
-}
-
-message ProjectileState {
-    int32 projectile_id = 1;
-    int32 owner_id = 2;
     float maxSpeed = 3;
     Vector2 position = 4;
     Vector2 velocity = 5;
-    BoundingBox boundingBox = 6;
+    Vector2 acceleration = 6;
+    Vector2 targetVelocity = 7;
 }
 
 message Vector2 {
@@ -69,12 +54,9 @@ message Vector2 {
     float y = 2;
 }
 
-message BoundingBox {
-    float width = 1;
-    float height = 2;
-}
-
-message ViewPort {
-    float width = 1;
-    float height = 2;
+message ViewPortBounds {
+    float min_x = 1;
+    float min_y = 2;
+    float max_x = 3;
+    float max_y = 4;
 }

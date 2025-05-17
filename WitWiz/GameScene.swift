@@ -5,18 +5,13 @@ import WitWizCl
 import GRPCCore
 import GRPCNIOTransportHTTP2
 
-let characterTextureAtlas = SKTextureAtlas(named: "Character")
-
 class GameScene: SKScene, ObservableObject {
-    
     var connectClientTask: Task<Void, Error>?
     var processGameStateTask: Task<Void, Error>?
     var joinGameOkTask: Task<Void, Error>?
     
     var yourID: Int32 = 0
     var levelID: Int32 = 0
-    var worldOffsetX: CGFloat = 0
-    var worldViewPort: Witwiz_ViewPort = Witwiz_ViewPort()
     var characterIds: [Int32] = []
     var playerIDs: Set<Int32> = []
     
@@ -35,14 +30,7 @@ class GameScene: SKScene, ObservableObject {
     @Published var gamePaused: Bool = false
     
     func setSize(_ value: CGSize) -> GameScene {
-        scaleMode = .aspectFit
-        if value == size {
-            return self
-        }
         size = value
-        size.width = min(worldViewPort.width.cgFloat, size.width)
-        size.height = min(worldViewPort.height.cgFloat, size.height)
-        sendViewPort()
         return self
     }
     
@@ -128,19 +116,17 @@ class GameScene: SKScene, ObservableObject {
             } catch {
                 updateClientOkay(false)
             }
-            playerIDs.forEach { playerId in
-                childNode(withName: "player\(playerId)")?.removeFromParent()
-            }
-            childNode(withName: "world_background")?.removeFromParent()
+            removeAllChildren()
             joinGameOkTask?.cancel()
             processGameStateTask?.cancel()
             joinGameOkTask = nil
             processGameStateTask = nil
             connectClientTask = nil
             playerInputContinuation = nil
-            worldViewPort = Witwiz_ViewPort()
             characterIds = []
             playerIDs = []
+            yourID = 0
+            levelID = 0
             updateGameStarted(false)
             updateSelectCharacter(false)
             updateGameOver(false)
@@ -231,19 +217,12 @@ class GameScene: SKScene, ObservableObject {
         if state.isInitial {
             state.players.forEach { player in
                 yourID = player.playerID
-                sendViewPort()
             }
             return
         }
         updateGameStarted(state.gameStarted)
         updateGameOver(state.gameOver)
         updateGamePaused(state.gamePaused)
-        worldOffsetX = state.worldOffset.x.cgFloat
-        worldViewPort = state.worldViewPort
-        if levelID != state.levelID {
-            childNode(withName: "world_background")?.removeFromParent()
-        }
-        levelID = state.levelID
         characterIds = state.characterIds
         if !state.gameStarted {
             if let player = state.players.withID(yourID) {
@@ -252,13 +231,11 @@ class GameScene: SKScene, ObservableObject {
             return
         }
         if state.gameOver {
-            childNode(withName: "world_background")?.removeFromParent()
-        } else if let node = childNode(withName: "world_background") as? SKSpriteNode {
-            node.position.x = worldOffsetX * -1
-        } else {
-            size.width = min(worldViewPort.width.cgFloat, size.width)
-            size.height = min(worldViewPort.height.cgFloat, size.height)
-            createGameLevel()
+            size = .zero
+            backgroundColor = .gray
+        } else if levelID == 0 && state.levelID != 0 {
+            levelID = state.levelID
+            createGameLevel(state.levelID)
         }
         state.players.forEach { player in
             if state.gameOver {
@@ -268,13 +245,12 @@ class GameScene: SKScene, ObservableObject {
             if player.playerID == yourID {
                 updateSelectCharacter(!characterIds.contains(player.characterID))
             }
-            if let node = childNode(withName: "player\(player.playerID)") as? PlayerSpriteNode {
+            if let node = childNode(withName: "player\(player.playerID)") {
                 let pos = CGPoint(x: player.position.x.cgFloat, y: player.position.y.cgFloat)
                 node.position = pos
-                node.updateCharacterID(player.characterID)
-            } else {
+            } else if characterIds.contains(player.characterID) {
                 let position = CGPoint(x: player.position.x.cgFloat, y: player.position.y.cgFloat)
-                let node = PlayerSpriteNode.make(player.characterID)
+                let node: BaseCharacter = BaseCharacter(characterID: player.characterID)
                 node.position = position
                 node.name = "player\(player.playerID)"
                 addChild(node)
@@ -288,34 +264,17 @@ class GameScene: SKScene, ObservableObject {
         }
     }
     
-    private func sendViewPort() {
-        if yourID == 0 {
-            return
-        }
-        var input = Witwiz_PlayerInput()
-        input.playerID = yourID
-        input.action = .reportViewport
-        input.viewPort = Witwiz_ViewPort()
-        input.viewPort.width = size.width.float
-        input.viewPort.height = size.height.float
-        playerInputContinuation?.yield(input)
-    }
-    
-    private func createGameLevel() {
-        if levelID == 0 {
-            return
-        }
-        let size = CGSize(width: worldViewPort.width.cgFloat, height: worldViewPort.height.cgFloat)
-        let gameLevel: SKSpriteNode
+    private func createGameLevel(_ levelID: Int32) {
         switch levelID {
-        case 1: gameLevel = GameLevel1.make(size: size)
-        case 2: gameLevel = GameLevel2.make(size: size)
+        case 1:
+            backgroundColor = .systemBlue
+            
+        case 2:
+            backgroundColor = .systemPink
+            
         default:
             return
         }
-        gameLevel.name = "world_background"
-        gameLevel.zPosition = -1
-        addChild(gameLevel)
     }
 }
 
@@ -331,38 +290,14 @@ extension CGFloat {
     }
 }
 
-extension SKSpriteNode {
-    static func make() -> SKSpriteNode {
-        let node = SKSpriteNode()
-        node.anchorPoint.x = 0
-        node.anchorPoint.y = 0
-        return node
-    }
-}
-
 extension Array<Witwiz_PlayerState> {
     func withID(_ playerID: Int32) -> Witwiz_PlayerState? {
         return first { $0.playerID == playerID }
     }
 }
 
-class PlayerSpriteNode: SKSpriteNode {
-    private var characterID: Int32 = 0
-    
-    func updateCharacterID(_ value: Int32) {
-        if value == characterID {
-            return
-        }
-        let newTexture = characterTextureAtlas.textureNamed("base_charac_\(value)")
-        texture = newTexture
-        size = newTexture.size()
-    }
-    
-    static func make(_ characterID: Int32) -> PlayerSpriteNode {
-        let node = PlayerSpriteNode()
-        node.anchorPoint.x = 0
-        node.anchorPoint.y = 0
-        node.updateCharacterID(characterID)
-        return node
+extension Witwiz_ViewPortBounds {
+    var cgSize: CGSize {
+        return CGSize(width: (maxX - minX).cgFloat, height: (maxY - minY).cgFloat)
     }
 }
