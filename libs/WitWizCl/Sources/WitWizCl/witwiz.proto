@@ -34,7 +34,7 @@ message GameStateUpdate {
     bool game_over = 3;
     bool game_paused = 4;
     bool is_initial = 5;
-    ViewPortBounds player_view_port_bounds = 6;
+    Bounds view_port_bounds = 6;
     repeated int32 character_ids = 7;
     repeated PlayerState players = 8;
 }
@@ -54,7 +54,7 @@ message Vector2 {
     float y = 2;
 }
 
-message ViewPortBounds {
+message Bounds {
     float min_x = 1;
     float min_y = 2;
     float max_x = 3;

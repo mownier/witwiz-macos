@@ -23,6 +23,8 @@ class GameScene: SKScene, ObservableObject {
     var moveLeftKeyPressed: Bool = false
     var pauseGameKeyPressed: Bool = false
     
+    var gameCamera: SKCameraNode!
+    
     @Published var clientOkay: Bool = false
     @Published var gameStarted: Bool = false
     @Published var selectCharacter: Bool = false
@@ -36,6 +38,10 @@ class GameScene: SKScene, ObservableObject {
     
     override func didMove(to view: SKView) {
         backgroundColor = .gray
+        
+        gameCamera = SKCameraNode()
+        addChild(gameCamera)
+        camera = gameCamera
     }
     
     override func keyDown(with event: NSEvent) {
@@ -236,6 +242,7 @@ class GameScene: SKScene, ObservableObject {
         } else if levelID == 0 && state.levelID != 0 {
             levelID = state.levelID
             createGameLevel(state.levelID)
+            createWorldBackground()
         }
         state.players.forEach { player in
             if state.gameOver {
@@ -257,6 +264,9 @@ class GameScene: SKScene, ObservableObject {
                 playerIDs.insert(player.playerID)
             }
         }
+        if !state.players.isEmpty {
+            updateCamera(state.viewPortBounds)
+        }
         playerIDs.forEach { playerID in
             if !state.players.contains(where: { $0.playerID == playerID }) {
                 childNode(withName: "player\(playerID)")?.removeFromParent()
@@ -276,6 +286,53 @@ class GameScene: SKScene, ObservableObject {
             return
         }
     }
+    
+    private func updateCamera(_ viewPortBounds: Witwiz_Bounds) {
+        let minX = viewPortBounds.minX.cgFloat
+        let minY = viewPortBounds.minY.cgFloat
+        let maxX = viewPortBounds.maxX.cgFloat
+        let maxY = viewPortBounds.maxY.cgFloat
+
+        // Calculate the center of the received viewport
+        let viewportCenterX = (minX + maxX) / 2
+        let viewportCenterY = (minY + maxY) / 2
+
+        // Set the camera's position to the center of the viewport
+        gameCamera.position = CGPoint(x: viewportCenterX, y: viewportCenterY)
+    }
+    
+    private func createWorldBackground() {
+        let parentNodeSize = CGSize(width: 5120, height: 1024)
+        let factor: CGFloat = 256
+        let rows = parentNodeSize.height / factor
+        let columns = parentNodeSize.width / factor
+        let parentNode = SKSpriteNode()
+        parentNode.size = parentNodeSize
+        parentNode.position = CGPoint(x: factor / 2, y: factor / 2)
+        parentNode.zPosition = -1
+        for rowIndex in 0..<Int(rows) {
+            for colIndex in 0..<Int(columns) {
+                let node = SKSpriteNode()
+                node.size = CGSize(width: factor, height: factor)
+                node.position = CGPoint(x: CGFloat(colIndex) * factor, y: CGFloat(rowIndex) * factor)
+                if rowIndex % 2 == 0 {
+                    if colIndex % 2 == 0 {
+                        node.color = .lightGray
+                    } else {
+                        node.color = .gray
+                    }
+                } else {
+                    if colIndex % 2 == 0 {
+                        node.color = .gray
+                    } else {
+                        node.color = .lightGray
+                    }
+                }
+                parentNode.addChild(node)
+            }
+        }
+        addChild(parentNode)
+    }
 }
 
 extension Float {
@@ -293,11 +350,5 @@ extension CGFloat {
 extension Array<Witwiz_PlayerState> {
     func withID(_ playerID: Int32) -> Witwiz_PlayerState? {
         return first { $0.playerID == playerID }
-    }
-}
-
-extension Witwiz_ViewPortBounds {
-    var cgSize: CGSize {
-        return CGSize(width: (maxX - minX).cgFloat, height: (maxY - minY).cgFloat)
     }
 }

@@ -125,14 +125,14 @@ public struct Witwiz_GameStateUpdate: Sendable {
 
   public var isInitial: Bool = false
 
-  public var playerViewPortBounds: Witwiz_ViewPortBounds {
-    get {return _playerViewPortBounds ?? Witwiz_ViewPortBounds()}
-    set {_playerViewPortBounds = newValue}
+  public var viewPortBounds: Witwiz_Bounds {
+    get {return _viewPortBounds ?? Witwiz_Bounds()}
+    set {_viewPortBounds = newValue}
   }
-  /// Returns true if `playerViewPortBounds` has been explicitly set.
-  public var hasPlayerViewPortBounds: Bool {return self._playerViewPortBounds != nil}
-  /// Clears the value of `playerViewPortBounds`. Subsequent reads from it will return its default value.
-  public mutating func clearPlayerViewPortBounds() {self._playerViewPortBounds = nil}
+  /// Returns true if `viewPortBounds` has been explicitly set.
+  public var hasViewPortBounds: Bool {return self._viewPortBounds != nil}
+  /// Clears the value of `viewPortBounds`. Subsequent reads from it will return its default value.
+  public mutating func clearViewPortBounds() {self._viewPortBounds = nil}
 
   public var characterIds: [Int32] = []
 
@@ -142,7 +142,7 @@ public struct Witwiz_GameStateUpdate: Sendable {
 
   public init() {}
 
-  fileprivate var _playerViewPortBounds: Witwiz_ViewPortBounds? = nil
+  fileprivate var _viewPortBounds: Witwiz_Bounds? = nil
 }
 
 public struct Witwiz_PlayerState: Sendable {
@@ -216,7 +216,7 @@ public struct Witwiz_Vector2: Sendable {
   public init() {}
 }
 
-public struct Witwiz_ViewPortBounds: Sendable {
+public struct Witwiz_Bounds: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -307,7 +307,7 @@ extension Witwiz_GameStateUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageI
     3: .standard(proto: "game_over"),
     4: .standard(proto: "game_paused"),
     5: .standard(proto: "is_initial"),
-    6: .standard(proto: "player_view_port_bounds"),
+    6: .standard(proto: "view_port_bounds"),
     7: .standard(proto: "character_ids"),
     8: .same(proto: "players"),
   ]
@@ -323,7 +323,7 @@ extension Witwiz_GameStateUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageI
       case 3: try { try decoder.decodeSingularBoolField(value: &self.gameOver) }()
       case 4: try { try decoder.decodeSingularBoolField(value: &self.gamePaused) }()
       case 5: try { try decoder.decodeSingularBoolField(value: &self.isInitial) }()
-      case 6: try { try decoder.decodeSingularMessageField(value: &self._playerViewPortBounds) }()
+      case 6: try { try decoder.decodeSingularMessageField(value: &self._viewPortBounds) }()
       case 7: try { try decoder.decodeRepeatedInt32Field(value: &self.characterIds) }()
       case 8: try { try decoder.decodeRepeatedMessageField(value: &self.players) }()
       default: break
@@ -351,7 +351,7 @@ extension Witwiz_GameStateUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageI
     if self.isInitial != false {
       try visitor.visitSingularBoolField(value: self.isInitial, fieldNumber: 5)
     }
-    try { if let v = self._playerViewPortBounds {
+    try { if let v = self._viewPortBounds {
       try visitor.visitSingularMessageField(value: v, fieldNumber: 6)
     } }()
     if !self.characterIds.isEmpty {
@@ -369,7 +369,7 @@ extension Witwiz_GameStateUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageI
     if lhs.gameOver != rhs.gameOver {return false}
     if lhs.gamePaused != rhs.gamePaused {return false}
     if lhs.isInitial != rhs.isInitial {return false}
-    if lhs._playerViewPortBounds != rhs._playerViewPortBounds {return false}
+    if lhs._viewPortBounds != rhs._viewPortBounds {return false}
     if lhs.characterIds != rhs.characterIds {return false}
     if lhs.players != rhs.players {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
@@ -487,8 +487,8 @@ extension Witwiz_Vector2: SwiftProtobuf.Message, SwiftProtobuf._MessageImplement
   }
 }
 
-extension Witwiz_ViewPortBounds: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".ViewPortBounds"
+extension Witwiz_Bounds: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".Bounds"
   public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
     1: .standard(proto: "min_x"),
     2: .standard(proto: "min_y"),
@@ -527,7 +527,7 @@ extension Witwiz_ViewPortBounds: SwiftProtobuf.Message, SwiftProtobuf._MessageIm
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  public static func ==(lhs: Witwiz_ViewPortBounds, rhs: Witwiz_ViewPortBounds) -> Bool {
+  public static func ==(lhs: Witwiz_Bounds, rhs: Witwiz_Bounds) -> Bool {
     if lhs.minX != rhs.minX {return false}
     if lhs.minY != rhs.minY {return false}
     if lhs.maxX != rhs.maxX {return false}
