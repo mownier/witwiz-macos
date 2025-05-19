@@ -24,6 +24,7 @@ class GameScene: SKScene, ObservableObject {
     var pauseGameKeyPressed: Bool = false
     
     var gameCamera: SKCameraNode!
+    var gameWorld: SKSpriteNode!
     
     @Published var clientOkay: Bool = false
     @Published var gameStarted: Bool = false
@@ -133,6 +134,11 @@ class GameScene: SKScene, ObservableObject {
             playerIDs = []
             yourID = 0
             levelID = 0
+            gameWorld?.removeAllChildren()
+            gameWorld = nil
+            gameCamera?.removeAllChildren()
+            gameCamera = nil
+            camera = nil
             updateGameStarted(false)
             updateSelectCharacter(false)
             updateGameOver(false)
@@ -242,7 +248,7 @@ class GameScene: SKScene, ObservableObject {
         } else if levelID == 0 && state.levelID != 0 {
             levelID = state.levelID
             createGameLevel(state.levelID)
-            createWorldBackground()
+            createWorldBackground(state.levelSize)
         }
         state.players.forEach { player in
             if state.gameOver {
@@ -253,10 +259,10 @@ class GameScene: SKScene, ObservableObject {
                 updateSelectCharacter(!characterIds.contains(player.characterID))
             }
             if let node = childNode(withName: "player\(player.playerID)") {
-                let pos = CGPoint(x: player.position.x.cgFloat, y: player.position.y.cgFloat)
+                let pos = CGPoint(x: player.viewportPosition.x.cgFloat, y: player.viewportPosition.y.cgFloat)
                 node.position = pos
             } else if characterIds.contains(player.characterID) {
-                let position = CGPoint(x: player.position.x.cgFloat, y: player.position.y.cgFloat)
+                let position = CGPoint(x: player.viewportPosition.x.cgFloat, y: player.viewportPosition.y.cgFloat)
                 let node: BaseCharacter = BaseCharacter(characterID: player.characterID)
                 node.position = position
                 node.name = "player\(player.playerID)"
@@ -265,7 +271,8 @@ class GameScene: SKScene, ObservableObject {
             }
         }
         if !state.players.isEmpty {
-            updateCamera(state.viewPortBounds)
+            updateCamera(state.viewportBounds)
+            updateWorld(state.levelBounds)
         }
         playerIDs.forEach { playerID in
             if !state.players.contains(where: { $0.playerID == playerID }) {
@@ -287,11 +294,22 @@ class GameScene: SKScene, ObservableObject {
         }
     }
     
-    private func updateCamera(_ viewPortBounds: Witwiz_Bounds) {
-        let minX = viewPortBounds.minX.cgFloat
-        let minY = viewPortBounds.minY.cgFloat
-        let maxX = viewPortBounds.maxX.cgFloat
-        let maxY = viewPortBounds.maxY.cgFloat
+    private func updateWorld(_ levelBounds: Witwiz_Bounds) {
+        if gameWorld == nil {
+            return
+        }
+        let position = CGPoint(x: levelBounds.minX.cgFloat, y: levelBounds.minY.cgFloat)
+        gameWorld.position = position
+    }
+    
+    private func updateCamera(_ viewportBounds: Witwiz_Bounds) {
+        if gameCamera == nil {
+            return
+        }
+        let minX = viewportBounds.minX.cgFloat
+        let minY = viewportBounds.minY.cgFloat
+        let maxX = viewportBounds.maxX.cgFloat
+        let maxY = viewportBounds.maxY.cgFloat
 
         // Calculate the center of the received viewport
         let viewportCenterX = (minX + maxX) / 2
@@ -301,17 +319,17 @@ class GameScene: SKScene, ObservableObject {
         gameCamera.position = CGPoint(x: viewportCenterX, y: viewportCenterY)
     }
     
-    private func createWorldBackground() {
-        let parentNodeSize = CGSize(width: 5120, height: 1024)
+    private func createWorldBackground(_ levelSize: Witwiz_Size) {
+        let parentNodeSize = CGSize(width: levelSize.width.cgFloat, height: levelSize.height.cgFloat)
         let factor: CGFloat = 256
         let rows = parentNodeSize.height / factor
         let columns = parentNodeSize.width / factor
         let parentNode = SKSpriteNode()
         parentNode.size = parentNodeSize
-        parentNode.position = CGPoint(x: factor / 2, y: factor / 2)
+        parentNode.position = CGPoint(x: 0, y: 0)
         parentNode.zPosition = -1
-        for rowIndex in 0..<Int(rows) {
-            for colIndex in 0..<Int(columns) {
+        for rowIndex in 0..<Int(rows + 1) {
+            for colIndex in 0..<Int(columns + 1) {
                 let node = SKSpriteNode()
                 node.size = CGSize(width: factor, height: factor)
                 node.position = CGPoint(x: CGFloat(colIndex) * factor, y: CGFloat(rowIndex) * factor)
@@ -331,7 +349,29 @@ class GameScene: SKScene, ObservableObject {
                 parentNode.addChild(node)
             }
         }
+        gameWorld = parentNode
         addChild(parentNode)
+        
+        
+        if gameCamera == nil {
+            gameCamera = SKCameraNode()
+            addChild(gameCamera)
+            camera = gameCamera
+        }
+    }
+    
+    private func addCameraBackgroundForDebug() {
+        if gameCamera == nil {
+            return
+        }
+        
+        // Create a sprite node for the camera's background
+        let cameraBackground = SKSpriteNode(color: .blue.withAlphaComponent(0.2), size: size)
+        cameraBackground.zPosition = 10 // Ensure it's behind other nodes
+        cameraBackground.position = CGPoint(x: 0, y: 0) // Position at the camera's origin
+
+        // Add the background sprite as a child of the camera node
+        gameCamera.addChild(cameraBackground)
     }
 }
 

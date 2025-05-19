@@ -34,22 +34,36 @@ message GameStateUpdate {
     bool game_over = 3;
     bool game_paused = 4;
     bool is_initial = 5;
-    Bounds view_port_bounds = 6;
-    repeated int32 character_ids = 7;
-    repeated PlayerState players = 8;
+    Size viewport_size = 6;
+    Size level_size = 7;
+    Bounds viewport_bounds = 8;
+    Bounds level_bounds = 9;
+    repeated int32 character_ids = 10;
+    repeated PlayerState players = 11;
 }
 
 message PlayerState {
     int32 player_id = 1;
     int32 character_id = 2;
     float maxSpeed = 3;
-    Vector2 position = 4;
-    Vector2 velocity = 5;
-    Vector2 acceleration = 6;
-    Vector2 targetVelocity = 7;
+    Point levelPosition = 4;
+    Point viewportPosition = 5;
+    Vector velocity = 6;
+    Vector acceleration = 7;
+    Vector targetVelocity = 8;
 }
 
-message Vector2 {
+message Size {
+    float width = 1;
+    float height = 2;
+}
+
+message Point {
+    float x = 1;
+    float y = 2;
+}
+
+message Vector {
     float x = 1;
     float y = 2;
 }

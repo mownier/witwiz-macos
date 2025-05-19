@@ -110,39 +110,87 @@ public struct Witwiz_PlayerInput: Sendable {
   public init() {}
 }
 
-public struct Witwiz_GameStateUpdate: Sendable {
+public struct Witwiz_GameStateUpdate: @unchecked Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  public var levelID: Int32 = 0
-
-  public var gameStarted: Bool = false
-
-  public var gameOver: Bool = false
-
-  public var gamePaused: Bool = false
-
-  public var isInitial: Bool = false
-
-  public var viewPortBounds: Witwiz_Bounds {
-    get {return _viewPortBounds ?? Witwiz_Bounds()}
-    set {_viewPortBounds = newValue}
+  public var levelID: Int32 {
+    get {return _storage._levelID}
+    set {_uniqueStorage()._levelID = newValue}
   }
-  /// Returns true if `viewPortBounds` has been explicitly set.
-  public var hasViewPortBounds: Bool {return self._viewPortBounds != nil}
-  /// Clears the value of `viewPortBounds`. Subsequent reads from it will return its default value.
-  public mutating func clearViewPortBounds() {self._viewPortBounds = nil}
 
-  public var characterIds: [Int32] = []
+  public var gameStarted: Bool {
+    get {return _storage._gameStarted}
+    set {_uniqueStorage()._gameStarted = newValue}
+  }
 
-  public var players: [Witwiz_PlayerState] = []
+  public var gameOver: Bool {
+    get {return _storage._gameOver}
+    set {_uniqueStorage()._gameOver = newValue}
+  }
+
+  public var gamePaused: Bool {
+    get {return _storage._gamePaused}
+    set {_uniqueStorage()._gamePaused = newValue}
+  }
+
+  public var isInitial: Bool {
+    get {return _storage._isInitial}
+    set {_uniqueStorage()._isInitial = newValue}
+  }
+
+  public var viewportSize: Witwiz_Size {
+    get {return _storage._viewportSize ?? Witwiz_Size()}
+    set {_uniqueStorage()._viewportSize = newValue}
+  }
+  /// Returns true if `viewportSize` has been explicitly set.
+  public var hasViewportSize: Bool {return _storage._viewportSize != nil}
+  /// Clears the value of `viewportSize`. Subsequent reads from it will return its default value.
+  public mutating func clearViewportSize() {_uniqueStorage()._viewportSize = nil}
+
+  public var levelSize: Witwiz_Size {
+    get {return _storage._levelSize ?? Witwiz_Size()}
+    set {_uniqueStorage()._levelSize = newValue}
+  }
+  /// Returns true if `levelSize` has been explicitly set.
+  public var hasLevelSize: Bool {return _storage._levelSize != nil}
+  /// Clears the value of `levelSize`. Subsequent reads from it will return its default value.
+  public mutating func clearLevelSize() {_uniqueStorage()._levelSize = nil}
+
+  public var viewportBounds: Witwiz_Bounds {
+    get {return _storage._viewportBounds ?? Witwiz_Bounds()}
+    set {_uniqueStorage()._viewportBounds = newValue}
+  }
+  /// Returns true if `viewportBounds` has been explicitly set.
+  public var hasViewportBounds: Bool {return _storage._viewportBounds != nil}
+  /// Clears the value of `viewportBounds`. Subsequent reads from it will return its default value.
+  public mutating func clearViewportBounds() {_uniqueStorage()._viewportBounds = nil}
+
+  public var levelBounds: Witwiz_Bounds {
+    get {return _storage._levelBounds ?? Witwiz_Bounds()}
+    set {_uniqueStorage()._levelBounds = newValue}
+  }
+  /// Returns true if `levelBounds` has been explicitly set.
+  public var hasLevelBounds: Bool {return _storage._levelBounds != nil}
+  /// Clears the value of `levelBounds`. Subsequent reads from it will return its default value.
+  public mutating func clearLevelBounds() {_uniqueStorage()._levelBounds = nil}
+
+  public var characterIds: [Int32] {
+    get {return _storage._characterIds}
+    set {_uniqueStorage()._characterIds = newValue}
+  }
+
+  public var players: [Witwiz_PlayerState] {
+    get {return _storage._players}
+    set {_uniqueStorage()._players = newValue}
+  }
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
 
-  fileprivate var _viewPortBounds: Witwiz_Bounds? = nil
+  fileprivate var _storage = _StorageClass.defaultInstance
 }
 
 public struct Witwiz_PlayerState: Sendable {
@@ -156,17 +204,26 @@ public struct Witwiz_PlayerState: Sendable {
 
   public var maxSpeed: Float = 0
 
-  public var position: Witwiz_Vector2 {
-    get {return _position ?? Witwiz_Vector2()}
-    set {_position = newValue}
+  public var levelPosition: Witwiz_Point {
+    get {return _levelPosition ?? Witwiz_Point()}
+    set {_levelPosition = newValue}
   }
-  /// Returns true if `position` has been explicitly set.
-  public var hasPosition: Bool {return self._position != nil}
-  /// Clears the value of `position`. Subsequent reads from it will return its default value.
-  public mutating func clearPosition() {self._position = nil}
+  /// Returns true if `levelPosition` has been explicitly set.
+  public var hasLevelPosition: Bool {return self._levelPosition != nil}
+  /// Clears the value of `levelPosition`. Subsequent reads from it will return its default value.
+  public mutating func clearLevelPosition() {self._levelPosition = nil}
 
-  public var velocity: Witwiz_Vector2 {
-    get {return _velocity ?? Witwiz_Vector2()}
+  public var viewportPosition: Witwiz_Point {
+    get {return _viewportPosition ?? Witwiz_Point()}
+    set {_viewportPosition = newValue}
+  }
+  /// Returns true if `viewportPosition` has been explicitly set.
+  public var hasViewportPosition: Bool {return self._viewportPosition != nil}
+  /// Clears the value of `viewportPosition`. Subsequent reads from it will return its default value.
+  public mutating func clearViewportPosition() {self._viewportPosition = nil}
+
+  public var velocity: Witwiz_Vector {
+    get {return _velocity ?? Witwiz_Vector()}
     set {_velocity = newValue}
   }
   /// Returns true if `velocity` has been explicitly set.
@@ -174,8 +231,8 @@ public struct Witwiz_PlayerState: Sendable {
   /// Clears the value of `velocity`. Subsequent reads from it will return its default value.
   public mutating func clearVelocity() {self._velocity = nil}
 
-  public var acceleration: Witwiz_Vector2 {
-    get {return _acceleration ?? Witwiz_Vector2()}
+  public var acceleration: Witwiz_Vector {
+    get {return _acceleration ?? Witwiz_Vector()}
     set {_acceleration = newValue}
   }
   /// Returns true if `acceleration` has been explicitly set.
@@ -183,8 +240,8 @@ public struct Witwiz_PlayerState: Sendable {
   /// Clears the value of `acceleration`. Subsequent reads from it will return its default value.
   public mutating func clearAcceleration() {self._acceleration = nil}
 
-  public var targetVelocity: Witwiz_Vector2 {
-    get {return _targetVelocity ?? Witwiz_Vector2()}
+  public var targetVelocity: Witwiz_Vector {
+    get {return _targetVelocity ?? Witwiz_Vector()}
     set {_targetVelocity = newValue}
   }
   /// Returns true if `targetVelocity` has been explicitly set.
@@ -196,13 +253,42 @@ public struct Witwiz_PlayerState: Sendable {
 
   public init() {}
 
-  fileprivate var _position: Witwiz_Vector2? = nil
-  fileprivate var _velocity: Witwiz_Vector2? = nil
-  fileprivate var _acceleration: Witwiz_Vector2? = nil
-  fileprivate var _targetVelocity: Witwiz_Vector2? = nil
+  fileprivate var _levelPosition: Witwiz_Point? = nil
+  fileprivate var _viewportPosition: Witwiz_Point? = nil
+  fileprivate var _velocity: Witwiz_Vector? = nil
+  fileprivate var _acceleration: Witwiz_Vector? = nil
+  fileprivate var _targetVelocity: Witwiz_Vector? = nil
 }
 
-public struct Witwiz_Vector2: Sendable {
+public struct Witwiz_Size: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  public var width: Float = 0
+
+  public var height: Float = 0
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+public struct Witwiz_Point: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  public var x: Float = 0
+
+  public var y: Float = 0
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+public struct Witwiz_Vector: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
@@ -307,71 +393,149 @@ extension Witwiz_GameStateUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageI
     3: .standard(proto: "game_over"),
     4: .standard(proto: "game_paused"),
     5: .standard(proto: "is_initial"),
-    6: .standard(proto: "view_port_bounds"),
-    7: .standard(proto: "character_ids"),
-    8: .same(proto: "players"),
+    6: .standard(proto: "viewport_size"),
+    7: .standard(proto: "level_size"),
+    8: .standard(proto: "viewport_bounds"),
+    9: .standard(proto: "level_bounds"),
+    10: .standard(proto: "character_ids"),
+    11: .same(proto: "players"),
   ]
 
+  fileprivate class _StorageClass {
+    var _levelID: Int32 = 0
+    var _gameStarted: Bool = false
+    var _gameOver: Bool = false
+    var _gamePaused: Bool = false
+    var _isInitial: Bool = false
+    var _viewportSize: Witwiz_Size? = nil
+    var _levelSize: Witwiz_Size? = nil
+    var _viewportBounds: Witwiz_Bounds? = nil
+    var _levelBounds: Witwiz_Bounds? = nil
+    var _characterIds: [Int32] = []
+    var _players: [Witwiz_PlayerState] = []
+
+    #if swift(>=5.10)
+      // This property is used as the initial default value for new instances of the type.
+      // The type itself is protecting the reference to its storage via CoW semantics.
+      // This will force a copy to be made of this reference when the first mutation occurs;
+      // hence, it is safe to mark this as `nonisolated(unsafe)`.
+      static nonisolated(unsafe) let defaultInstance = _StorageClass()
+    #else
+      static let defaultInstance = _StorageClass()
+    #endif
+
+    private init() {}
+
+    init(copying source: _StorageClass) {
+      _levelID = source._levelID
+      _gameStarted = source._gameStarted
+      _gameOver = source._gameOver
+      _gamePaused = source._gamePaused
+      _isInitial = source._isInitial
+      _viewportSize = source._viewportSize
+      _levelSize = source._levelSize
+      _viewportBounds = source._viewportBounds
+      _levelBounds = source._levelBounds
+      _characterIds = source._characterIds
+      _players = source._players
+    }
+  }
+
+  fileprivate mutating func _uniqueStorage() -> _StorageClass {
+    if !isKnownUniquelyReferenced(&_storage) {
+      _storage = _StorageClass(copying: _storage)
+    }
+    return _storage
+  }
+
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularInt32Field(value: &self.levelID) }()
-      case 2: try { try decoder.decodeSingularBoolField(value: &self.gameStarted) }()
-      case 3: try { try decoder.decodeSingularBoolField(value: &self.gameOver) }()
-      case 4: try { try decoder.decodeSingularBoolField(value: &self.gamePaused) }()
-      case 5: try { try decoder.decodeSingularBoolField(value: &self.isInitial) }()
-      case 6: try { try decoder.decodeSingularMessageField(value: &self._viewPortBounds) }()
-      case 7: try { try decoder.decodeRepeatedInt32Field(value: &self.characterIds) }()
-      case 8: try { try decoder.decodeRepeatedMessageField(value: &self.players) }()
-      default: break
+    _ = _uniqueStorage()
+    try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
+      while let fieldNumber = try decoder.nextFieldNumber() {
+        // The use of inline closures is to circumvent an issue where the compiler
+        // allocates stack space for every case branch when no optimizations are
+        // enabled. https://github.com/apple/swift-protobuf/issues/1034
+        switch fieldNumber {
+        case 1: try { try decoder.decodeSingularInt32Field(value: &_storage._levelID) }()
+        case 2: try { try decoder.decodeSingularBoolField(value: &_storage._gameStarted) }()
+        case 3: try { try decoder.decodeSingularBoolField(value: &_storage._gameOver) }()
+        case 4: try { try decoder.decodeSingularBoolField(value: &_storage._gamePaused) }()
+        case 5: try { try decoder.decodeSingularBoolField(value: &_storage._isInitial) }()
+        case 6: try { try decoder.decodeSingularMessageField(value: &_storage._viewportSize) }()
+        case 7: try { try decoder.decodeSingularMessageField(value: &_storage._levelSize) }()
+        case 8: try { try decoder.decodeSingularMessageField(value: &_storage._viewportBounds) }()
+        case 9: try { try decoder.decodeSingularMessageField(value: &_storage._levelBounds) }()
+        case 10: try { try decoder.decodeRepeatedInt32Field(value: &_storage._characterIds) }()
+        case 11: try { try decoder.decodeRepeatedMessageField(value: &_storage._players) }()
+        default: break
+        }
       }
     }
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    // The use of inline closures is to circumvent an issue where the compiler
-    // allocates stack space for every if/case branch local when no optimizations
-    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
-    // https://github.com/apple/swift-protobuf/issues/1182
-    if self.levelID != 0 {
-      try visitor.visitSingularInt32Field(value: self.levelID, fieldNumber: 1)
-    }
-    if self.gameStarted != false {
-      try visitor.visitSingularBoolField(value: self.gameStarted, fieldNumber: 2)
-    }
-    if self.gameOver != false {
-      try visitor.visitSingularBoolField(value: self.gameOver, fieldNumber: 3)
-    }
-    if self.gamePaused != false {
-      try visitor.visitSingularBoolField(value: self.gamePaused, fieldNumber: 4)
-    }
-    if self.isInitial != false {
-      try visitor.visitSingularBoolField(value: self.isInitial, fieldNumber: 5)
-    }
-    try { if let v = self._viewPortBounds {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 6)
-    } }()
-    if !self.characterIds.isEmpty {
-      try visitor.visitPackedInt32Field(value: self.characterIds, fieldNumber: 7)
-    }
-    if !self.players.isEmpty {
-      try visitor.visitRepeatedMessageField(value: self.players, fieldNumber: 8)
+    try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every if/case branch local when no optimizations
+      // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+      // https://github.com/apple/swift-protobuf/issues/1182
+      if _storage._levelID != 0 {
+        try visitor.visitSingularInt32Field(value: _storage._levelID, fieldNumber: 1)
+      }
+      if _storage._gameStarted != false {
+        try visitor.visitSingularBoolField(value: _storage._gameStarted, fieldNumber: 2)
+      }
+      if _storage._gameOver != false {
+        try visitor.visitSingularBoolField(value: _storage._gameOver, fieldNumber: 3)
+      }
+      if _storage._gamePaused != false {
+        try visitor.visitSingularBoolField(value: _storage._gamePaused, fieldNumber: 4)
+      }
+      if _storage._isInitial != false {
+        try visitor.visitSingularBoolField(value: _storage._isInitial, fieldNumber: 5)
+      }
+      try { if let v = _storage._viewportSize {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 6)
+      } }()
+      try { if let v = _storage._levelSize {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 7)
+      } }()
+      try { if let v = _storage._viewportBounds {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 8)
+      } }()
+      try { if let v = _storage._levelBounds {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 9)
+      } }()
+      if !_storage._characterIds.isEmpty {
+        try visitor.visitPackedInt32Field(value: _storage._characterIds, fieldNumber: 10)
+      }
+      if !_storage._players.isEmpty {
+        try visitor.visitRepeatedMessageField(value: _storage._players, fieldNumber: 11)
+      }
     }
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Witwiz_GameStateUpdate, rhs: Witwiz_GameStateUpdate) -> Bool {
-    if lhs.levelID != rhs.levelID {return false}
-    if lhs.gameStarted != rhs.gameStarted {return false}
-    if lhs.gameOver != rhs.gameOver {return false}
-    if lhs.gamePaused != rhs.gamePaused {return false}
-    if lhs.isInitial != rhs.isInitial {return false}
-    if lhs._viewPortBounds != rhs._viewPortBounds {return false}
-    if lhs.characterIds != rhs.characterIds {return false}
-    if lhs.players != rhs.players {return false}
+    if lhs._storage !== rhs._storage {
+      let storagesAreEqual: Bool = withExtendedLifetime((lhs._storage, rhs._storage)) { (_args: (_StorageClass, _StorageClass)) in
+        let _storage = _args.0
+        let rhs_storage = _args.1
+        if _storage._levelID != rhs_storage._levelID {return false}
+        if _storage._gameStarted != rhs_storage._gameStarted {return false}
+        if _storage._gameOver != rhs_storage._gameOver {return false}
+        if _storage._gamePaused != rhs_storage._gamePaused {return false}
+        if _storage._isInitial != rhs_storage._isInitial {return false}
+        if _storage._viewportSize != rhs_storage._viewportSize {return false}
+        if _storage._levelSize != rhs_storage._levelSize {return false}
+        if _storage._viewportBounds != rhs_storage._viewportBounds {return false}
+        if _storage._levelBounds != rhs_storage._levelBounds {return false}
+        if _storage._characterIds != rhs_storage._characterIds {return false}
+        if _storage._players != rhs_storage._players {return false}
+        return true
+      }
+      if !storagesAreEqual {return false}
+    }
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -383,10 +547,11 @@ extension Witwiz_PlayerState: SwiftProtobuf.Message, SwiftProtobuf._MessageImple
     1: .standard(proto: "player_id"),
     2: .standard(proto: "character_id"),
     3: .same(proto: "maxSpeed"),
-    4: .same(proto: "position"),
-    5: .same(proto: "velocity"),
-    6: .same(proto: "acceleration"),
-    7: .same(proto: "targetVelocity"),
+    4: .same(proto: "levelPosition"),
+    5: .same(proto: "viewportPosition"),
+    6: .same(proto: "velocity"),
+    7: .same(proto: "acceleration"),
+    8: .same(proto: "targetVelocity"),
   ]
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
@@ -398,10 +563,11 @@ extension Witwiz_PlayerState: SwiftProtobuf.Message, SwiftProtobuf._MessageImple
       case 1: try { try decoder.decodeSingularInt32Field(value: &self.playerID) }()
       case 2: try { try decoder.decodeSingularInt32Field(value: &self.characterID) }()
       case 3: try { try decoder.decodeSingularFloatField(value: &self.maxSpeed) }()
-      case 4: try { try decoder.decodeSingularMessageField(value: &self._position) }()
-      case 5: try { try decoder.decodeSingularMessageField(value: &self._velocity) }()
-      case 6: try { try decoder.decodeSingularMessageField(value: &self._acceleration) }()
-      case 7: try { try decoder.decodeSingularMessageField(value: &self._targetVelocity) }()
+      case 4: try { try decoder.decodeSingularMessageField(value: &self._levelPosition) }()
+      case 5: try { try decoder.decodeSingularMessageField(value: &self._viewportPosition) }()
+      case 6: try { try decoder.decodeSingularMessageField(value: &self._velocity) }()
+      case 7: try { try decoder.decodeSingularMessageField(value: &self._acceleration) }()
+      case 8: try { try decoder.decodeSingularMessageField(value: &self._targetVelocity) }()
       default: break
       }
     }
@@ -421,17 +587,20 @@ extension Witwiz_PlayerState: SwiftProtobuf.Message, SwiftProtobuf._MessageImple
     if self.maxSpeed.bitPattern != 0 {
       try visitor.visitSingularFloatField(value: self.maxSpeed, fieldNumber: 3)
     }
-    try { if let v = self._position {
+    try { if let v = self._levelPosition {
       try visitor.visitSingularMessageField(value: v, fieldNumber: 4)
     } }()
-    try { if let v = self._velocity {
+    try { if let v = self._viewportPosition {
       try visitor.visitSingularMessageField(value: v, fieldNumber: 5)
     } }()
-    try { if let v = self._acceleration {
+    try { if let v = self._velocity {
       try visitor.visitSingularMessageField(value: v, fieldNumber: 6)
     } }()
-    try { if let v = self._targetVelocity {
+    try { if let v = self._acceleration {
       try visitor.visitSingularMessageField(value: v, fieldNumber: 7)
+    } }()
+    try { if let v = self._targetVelocity {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 8)
     } }()
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -440,7 +609,8 @@ extension Witwiz_PlayerState: SwiftProtobuf.Message, SwiftProtobuf._MessageImple
     if lhs.playerID != rhs.playerID {return false}
     if lhs.characterID != rhs.characterID {return false}
     if lhs.maxSpeed != rhs.maxSpeed {return false}
-    if lhs._position != rhs._position {return false}
+    if lhs._levelPosition != rhs._levelPosition {return false}
+    if lhs._viewportPosition != rhs._viewportPosition {return false}
     if lhs._velocity != rhs._velocity {return false}
     if lhs._acceleration != rhs._acceleration {return false}
     if lhs._targetVelocity != rhs._targetVelocity {return false}
@@ -449,8 +619,46 @@ extension Witwiz_PlayerState: SwiftProtobuf.Message, SwiftProtobuf._MessageImple
   }
 }
 
-extension Witwiz_Vector2: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".Vector2"
+extension Witwiz_Size: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".Size"
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    1: .same(proto: "width"),
+    2: .same(proto: "height"),
+  ]
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularFloatField(value: &self.width) }()
+      case 2: try { try decoder.decodeSingularFloatField(value: &self.height) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if self.width.bitPattern != 0 {
+      try visitor.visitSingularFloatField(value: self.width, fieldNumber: 1)
+    }
+    if self.height.bitPattern != 0 {
+      try visitor.visitSingularFloatField(value: self.height, fieldNumber: 2)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Witwiz_Size, rhs: Witwiz_Size) -> Bool {
+    if lhs.width != rhs.width {return false}
+    if lhs.height != rhs.height {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Witwiz_Point: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".Point"
   public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
     1: .same(proto: "x"),
     2: .same(proto: "y"),
@@ -479,7 +687,45 @@ extension Witwiz_Vector2: SwiftProtobuf.Message, SwiftProtobuf._MessageImplement
     try unknownFields.traverse(visitor: &visitor)
   }
 
-  public static func ==(lhs: Witwiz_Vector2, rhs: Witwiz_Vector2) -> Bool {
+  public static func ==(lhs: Witwiz_Point, rhs: Witwiz_Point) -> Bool {
+    if lhs.x != rhs.x {return false}
+    if lhs.y != rhs.y {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Witwiz_Vector: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".Vector"
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    1: .same(proto: "x"),
+    2: .same(proto: "y"),
+  ]
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularFloatField(value: &self.x) }()
+      case 2: try { try decoder.decodeSingularFloatField(value: &self.y) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if self.x.bitPattern != 0 {
+      try visitor.visitSingularFloatField(value: self.x, fieldNumber: 1)
+    }
+    if self.y.bitPattern != 0 {
+      try visitor.visitSingularFloatField(value: self.y, fieldNumber: 2)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Witwiz_Vector, rhs: Witwiz_Vector) -> Bool {
     if lhs.x != rhs.x {return false}
     if lhs.y != rhs.y {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
