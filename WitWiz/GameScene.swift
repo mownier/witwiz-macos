@@ -25,6 +25,7 @@ class GameScene: SKScene, ObservableObject {
     
     var gameCamera: SKCameraNode!
     var gameWorld: SKSpriteNode!
+    var nextLevelPortal: SKSpriteNode!
     
     @Published var clientOkay: Bool = false
     @Published var gameStarted: Bool = false
@@ -39,10 +40,6 @@ class GameScene: SKScene, ObservableObject {
     
     override func didMove(to view: SKView) {
         backgroundColor = .gray
-        
-        gameCamera = SKCameraNode()
-        addChild(gameCamera)
-        camera = gameCamera
     }
     
     override func keyDown(with event: NSEvent) {
@@ -138,6 +135,8 @@ class GameScene: SKScene, ObservableObject {
             gameWorld = nil
             gameCamera?.removeAllChildren()
             gameCamera = nil
+            nextLevelPortal?.removeFromParent()
+            nextLevelPortal = nil
             camera = nil
             updateGameStarted(false)
             updateSelectCharacter(false)
@@ -245,8 +244,26 @@ class GameScene: SKScene, ObservableObject {
         if state.gameOver {
             size = .zero
             backgroundColor = .gray
-        } else if levelID == 0 && state.levelID != 0 {
+            camera = nil
+            gameCamera?.removeFromParent()
+            gameCamera = nil
+            nextLevelPortal?.removeFromParent()
+            nextLevelPortal = nil
+            levelID = 0
+            removeAllChildren()
+            return
+        }
+        if state.hasNextLevelPortal, nextLevelPortal == nil {
+            createNextLevelPortal(state.nextLevelPortal)
+        }
+        if state.levelID != 0 && levelID != state.levelID {
             levelID = state.levelID
+            nextLevelPortal?.removeFromParent()
+            nextLevelPortal = nil
+            gameCamera?.removeFromParent()
+            gameCamera = nil
+            camera = nil
+            removeAllChildren()
             createGameLevel(state.levelID)
             createWorldBackground(state.levelSize)
         }
@@ -372,6 +389,18 @@ class GameScene: SKScene, ObservableObject {
 
         // Add the background sprite as a child of the camera node
         gameCamera.addChild(cameraBackground)
+    }
+    
+    private func createNextLevelPortal(_ portal: Witwiz_NextLevelPortalState) {
+        nextLevelPortal?.removeFromParent()
+        let position = CGPoint(x: portal.position.x.cgFloat, y: portal.position.y.cgFloat)
+        let size = CGSize(width: portal.boundingBox.width.cgFloat, height: portal.boundingBox.height.cgFloat)
+        let node = SKSpriteNode()
+        node.color = .cyan.withAlphaComponent(0.75)
+        node.position = position
+        node.size = size
+        nextLevelPortal = node
+        addChild(node)
     }
 }
 

@@ -40,6 +40,7 @@ message GameStateUpdate {
     Bounds level_bounds = 9;
     repeated int32 character_ids = 10;
     repeated PlayerState players = 11;
+    NextLevelPortalState next_level_portal = 12;
 }
 
 message PlayerState {
@@ -51,6 +52,12 @@ message PlayerState {
     Vector velocity = 6;
     Vector acceleration = 7;
     Vector targetVelocity = 8;
+    Size bounding_box = 9;
+}
+
+message NextLevelPortalState {
+    Point position = 1;
+    Size bounding_box = 2;
 }
 
 message Size {
