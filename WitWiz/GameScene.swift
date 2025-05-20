@@ -253,7 +253,6 @@ class GameScene: SKScene, ObservableObject {
             removeAllChildren()
             return
         }
-        createObstacles(state.obstacles)
         if state.hasNextLevelPortal, nextLevelPortal == nil {
             createNextLevelPortal(state.nextLevelPortal)
         }
@@ -268,6 +267,7 @@ class GameScene: SKScene, ObservableObject {
             createGameLevel(state.levelID)
             createWorldBackground(state.levelSize)
         }
+        createObstacles(state.obstacles)
         state.players.forEach { player in
             if state.gameOver {
                 childNode(withName: "player\(player.playerID)")?.removeFromParent()
@@ -401,13 +401,13 @@ class GameScene: SKScene, ObservableObject {
         node.position = position
         node.size = size
         nextLevelPortal = node
-        addChild(node)
+        gameWorld?.addChild(node)
     }
     
     private func createObstacles(_ obstacles: [Witwiz_ObstacleState]) {
         for obstacle in obstacles {
-            if let _ = childNode(withName: "obstacle\(obstacle.obstacleID)") {
-                // TODO:
+            if let node = gameWorld?.childNode(withName: "obstacle\(obstacle.obstacleID)") {
+                node.position = CGPoint(x: obstacle.position.x.cgFloat, y: obstacle.position.y.cgFloat)
             } else {
                 let node = SKSpriteNode()
                 switch obstacle.obstacleID {
@@ -419,7 +419,7 @@ class GameScene: SKScene, ObservableObject {
                 node.name = "obstacle\(obstacle.obstacleID)"
                 node.position = CGPoint(x: obstacle.position.x.cgFloat, y: obstacle.position.y.cgFloat)
                 node.size = CGSize(width: obstacle.boundingBox.width.cgFloat, height: obstacle.boundingBox.height.cgFloat)
-                addChild(node)
+                gameWorld?.addChild(node)
             }
         }
     }
