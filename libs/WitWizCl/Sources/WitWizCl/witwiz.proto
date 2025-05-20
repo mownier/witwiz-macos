@@ -41,6 +41,7 @@ message GameStateUpdate {
     repeated int32 character_ids = 10;
     repeated PlayerState players = 11;
     NextLevelPortalState next_level_portal = 12;
+    repeated ObstacleState obstacles = 13;
 }
 
 message PlayerState {
@@ -58,6 +59,12 @@ message PlayerState {
 message NextLevelPortalState {
     Point position = 1;
     Size bounding_box = 2;
+}
+
+message ObstacleState {
+    int32 obstacle_id = 1;
+    Point position = 2;
+    Size bounding_box = 3;
 }
 
 message Size {

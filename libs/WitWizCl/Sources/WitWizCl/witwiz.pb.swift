@@ -195,6 +195,11 @@ public struct Witwiz_GameStateUpdate: @unchecked Sendable {
   /// Clears the value of `nextLevelPortal`. Subsequent reads from it will return its default value.
   public mutating func clearNextLevelPortal() {_uniqueStorage()._nextLevelPortal = nil}
 
+  public var obstacles: [Witwiz_ObstacleState] {
+    get {return _storage._obstacles}
+    set {_uniqueStorage()._obstacles = newValue}
+  }
+
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
@@ -283,6 +288,39 @@ public struct Witwiz_NextLevelPortalState: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
+
+  public var position: Witwiz_Point {
+    get {return _position ?? Witwiz_Point()}
+    set {_position = newValue}
+  }
+  /// Returns true if `position` has been explicitly set.
+  public var hasPosition: Bool {return self._position != nil}
+  /// Clears the value of `position`. Subsequent reads from it will return its default value.
+  public mutating func clearPosition() {self._position = nil}
+
+  public var boundingBox: Witwiz_Size {
+    get {return _boundingBox ?? Witwiz_Size()}
+    set {_boundingBox = newValue}
+  }
+  /// Returns true if `boundingBox` has been explicitly set.
+  public var hasBoundingBox: Bool {return self._boundingBox != nil}
+  /// Clears the value of `boundingBox`. Subsequent reads from it will return its default value.
+  public mutating func clearBoundingBox() {self._boundingBox = nil}
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+
+  fileprivate var _position: Witwiz_Point? = nil
+  fileprivate var _boundingBox: Witwiz_Size? = nil
+}
+
+public struct Witwiz_ObstacleState: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  public var obstacleID: Int32 = 0
 
   public var position: Witwiz_Point {
     get {return _position ?? Witwiz_Point()}
@@ -450,6 +488,7 @@ extension Witwiz_GameStateUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageI
     10: .standard(proto: "character_ids"),
     11: .same(proto: "players"),
     12: .standard(proto: "next_level_portal"),
+    13: .same(proto: "obstacles"),
   ]
 
   fileprivate class _StorageClass {
@@ -465,6 +504,7 @@ extension Witwiz_GameStateUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageI
     var _characterIds: [Int32] = []
     var _players: [Witwiz_PlayerState] = []
     var _nextLevelPortal: Witwiz_NextLevelPortalState? = nil
+    var _obstacles: [Witwiz_ObstacleState] = []
 
     #if swift(>=5.10)
       // This property is used as the initial default value for new instances of the type.
@@ -491,6 +531,7 @@ extension Witwiz_GameStateUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageI
       _characterIds = source._characterIds
       _players = source._players
       _nextLevelPortal = source._nextLevelPortal
+      _obstacles = source._obstacles
     }
   }
 
@@ -521,6 +562,7 @@ extension Witwiz_GameStateUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageI
         case 10: try { try decoder.decodeRepeatedInt32Field(value: &_storage._characterIds) }()
         case 11: try { try decoder.decodeRepeatedMessageField(value: &_storage._players) }()
         case 12: try { try decoder.decodeSingularMessageField(value: &_storage._nextLevelPortal) }()
+        case 13: try { try decoder.decodeRepeatedMessageField(value: &_storage._obstacles) }()
         default: break
         }
       }
@@ -569,6 +611,9 @@ extension Witwiz_GameStateUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageI
       try { if let v = _storage._nextLevelPortal {
         try visitor.visitSingularMessageField(value: v, fieldNumber: 12)
       } }()
+      if !_storage._obstacles.isEmpty {
+        try visitor.visitRepeatedMessageField(value: _storage._obstacles, fieldNumber: 13)
+      }
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -590,6 +635,7 @@ extension Witwiz_GameStateUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageI
         if _storage._characterIds != rhs_storage._characterIds {return false}
         if _storage._players != rhs_storage._players {return false}
         if _storage._nextLevelPortal != rhs_storage._nextLevelPortal {return false}
+        if _storage._obstacles != rhs_storage._obstacles {return false}
         return true
       }
       if !storagesAreEqual {return false}
@@ -718,6 +764,54 @@ extension Witwiz_NextLevelPortalState: SwiftProtobuf.Message, SwiftProtobuf._Mes
   }
 
   public static func ==(lhs: Witwiz_NextLevelPortalState, rhs: Witwiz_NextLevelPortalState) -> Bool {
+    if lhs._position != rhs._position {return false}
+    if lhs._boundingBox != rhs._boundingBox {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Witwiz_ObstacleState: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".ObstacleState"
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    1: .standard(proto: "obstacle_id"),
+    2: .same(proto: "position"),
+    3: .standard(proto: "bounding_box"),
+  ]
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularInt32Field(value: &self.obstacleID) }()
+      case 2: try { try decoder.decodeSingularMessageField(value: &self._position) }()
+      case 3: try { try decoder.decodeSingularMessageField(value: &self._boundingBox) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    if self.obstacleID != 0 {
+      try visitor.visitSingularInt32Field(value: self.obstacleID, fieldNumber: 1)
+    }
+    try { if let v = self._position {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
+    } }()
+    try { if let v = self._boundingBox {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 3)
+    } }()
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Witwiz_ObstacleState, rhs: Witwiz_ObstacleState) -> Bool {
+    if lhs.obstacleID != rhs.obstacleID {return false}
     if lhs._position != rhs._position {return false}
     if lhs._boundingBox != rhs._boundingBox {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}

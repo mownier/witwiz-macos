@@ -253,6 +253,7 @@ class GameScene: SKScene, ObservableObject {
             removeAllChildren()
             return
         }
+        createObstacles(state.obstacles)
         if state.hasNextLevelPortal, nextLevelPortal == nil {
             createNextLevelPortal(state.nextLevelPortal)
         }
@@ -401,6 +402,26 @@ class GameScene: SKScene, ObservableObject {
         node.size = size
         nextLevelPortal = node
         addChild(node)
+    }
+    
+    private func createObstacles(_ obstacles: [Witwiz_ObstacleState]) {
+        for obstacle in obstacles {
+            if let _ = childNode(withName: "obstacle\(obstacle.obstacleID)") {
+                // TODO:
+            } else {
+                let node = SKSpriteNode()
+                switch obstacle.obstacleID {
+                case 1:
+                    node.color = .magenta.withAlphaComponent(0.5)
+                default:
+                    break
+                }
+                node.name = "obstacle\(obstacle.obstacleID)"
+                node.position = CGPoint(x: obstacle.position.x.cgFloat, y: obstacle.position.y.cgFloat)
+                node.size = CGSize(width: obstacle.boundingBox.width.cgFloat, height: obstacle.boundingBox.height.cgFloat)
+                addChild(node)
+            }
+        }
     }
 }
 
