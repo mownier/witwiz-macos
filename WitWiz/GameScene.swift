@@ -23,7 +23,6 @@ class GameScene: SKScene, ObservableObject {
     var moveLeftKeyPressed: Bool = false
     var pauseGameKeyPressed: Bool = false
     
-    var gameCamera: SKCameraNode!
     var gameWorld: SKSpriteNode!
     var nextLevelPortal: SKSpriteNode!
     
@@ -133,11 +132,8 @@ class GameScene: SKScene, ObservableObject {
             levelID = 0
             gameWorld?.removeAllChildren()
             gameWorld = nil
-            gameCamera?.removeAllChildren()
-            gameCamera = nil
             nextLevelPortal?.removeFromParent()
             nextLevelPortal = nil
-            camera = nil
             updateGameStarted(false)
             updateSelectCharacter(false)
             updateGameOver(false)
@@ -227,7 +223,7 @@ class GameScene: SKScene, ObservableObject {
     private func processGameState(_ state: Witwiz_GameStateUpdate) {
         if state.isInitial {
             state.players.forEach { player in
-                yourID = player.playerID
+                yourID = player.id
             }
             return
         }
@@ -244,9 +240,6 @@ class GameScene: SKScene, ObservableObject {
         if state.gameOver {
             size = .zero
             backgroundColor = .gray
-            camera = nil
-            gameCamera?.removeFromParent()
-            gameCamera = nil
             nextLevelPortal?.removeFromParent()
             nextLevelPortal = nil
             levelID = 0
@@ -260,95 +253,66 @@ class GameScene: SKScene, ObservableObject {
             levelID = state.levelID
             nextLevelPortal?.removeFromParent()
             nextLevelPortal = nil
-            gameCamera?.removeFromParent()
-            gameCamera = nil
             gameWorld?.removeAllChildren()
             gameWorld?.removeFromParent()
             gameWorld = nil
-            camera = nil
             removeAllChildren()
-            createGameLevel(state.levelID)
-            createWorldBackground(state.levelSize)
+            createWorld(state.levelSize, state.levelPosition)
         }
         createObstacles(state.obstacles)
         state.players.forEach { player in
             if state.gameOver {
-                childNode(withName: "player\(player.playerID)")?.removeFromParent()
+                childNode(withName: "player\(player.id)")?.removeFromParent()
                 return
             }
-            if player.playerID == yourID {
+            if player.id == yourID {
                 updateSelectCharacter(!characterIds.contains(player.characterID))
             }
-            if let node = childNode(withName: "player\(player.playerID)") {
-                let pos = CGPoint(x: player.viewportPosition.x.cgFloat, y: player.viewportPosition.y.cgFloat)
+            if let node = gameWorld?.childNode(withName: "player\(player.id)") {
+                let pos = CGPoint(x: player.position.x.cgFloat, y: player.position.y.cgFloat)
                 node.position = pos
             } else if characterIds.contains(player.characterID) {
-                let position = CGPoint(x: player.viewportPosition.x.cgFloat, y: player.viewportPosition.y.cgFloat)
+                let position = CGPoint(x: player.position.x.cgFloat, y: player.position.y.cgFloat)
                 let node: BaseCharacter = BaseCharacter(characterID: player.characterID)
                 node.position = position
-                node.name = "player\(player.playerID)"
-                addChild(node)
-                playerIDs.insert(player.playerID)
+                node.name = "player\(player.id)"
+                gameWorld?.addChild(node)
+                playerIDs.insert(player.id)
             }
         }
         if !state.players.isEmpty {
-            updateCamera(state.viewportBounds)
-            updateWorld(state.levelBounds)
+            print("world pos", state.levelPosition)
+            updateWorld(state.levelPosition)
         }
         playerIDs.forEach { playerID in
-            if !state.players.contains(where: { $0.playerID == playerID }) {
+            if !state.players.contains(where: { $0.id == playerID }) {
                 childNode(withName: "player\(playerID)")?.removeFromParent()
             }
         }
     }
     
-    private func createGameLevel(_ levelID: Int32) {
-        switch levelID {
-        case 1:
-            backgroundColor = .systemBlue
-            
-        case 2:
-            backgroundColor = .systemPink
-            
-        default:
-            return
-        }
-    }
-    
-    private func updateWorld(_ levelBounds: Witwiz_Bounds) {
+    private func updateWorld(_ levelPoint: Witwiz_Point) {
         if gameWorld == nil {
             return
         }
-        let position = CGPoint(x: levelBounds.minX.cgFloat, y: levelBounds.minY.cgFloat)
+        let position = CGPoint(x: levelPoint.x.cgFloat, y: levelPoint.y.cgFloat)
         gameWorld.position = position
     }
     
-    private func updateCamera(_ viewportBounds: Witwiz_Bounds) {
-        if gameCamera == nil {
-            return
+    private func createWorld(_ levelSize: Witwiz_Size, _ levelPoint: Witwiz_Point) {
+        switch levelID {
+        case 1: backgroundColor = .systemBlue
+        case 2: backgroundColor = .systemPink
+        default: return
         }
-        let minX = viewportBounds.minX.cgFloat
-        let minY = viewportBounds.minY.cgFloat
-        let maxX = viewportBounds.maxX.cgFloat
-        let maxY = viewportBounds.maxY.cgFloat
-
-        // Calculate the center of the received viewport
-        let viewportCenterX = (minX + maxX) / 2
-        let viewportCenterY = (minY + maxY) / 2
-
-        // Set the camera's position to the center of the viewport
-        gameCamera.position = CGPoint(x: viewportCenterX, y: viewportCenterY)
-    }
-    
-    private func createWorldBackground(_ levelSize: Witwiz_Size) {
         let parentNodeSize = CGSize(width: levelSize.width.cgFloat, height: levelSize.height.cgFloat)
+        let parentNodePosition = CGPoint(x: levelPoint.x.cgFloat, y: levelPoint.x.cgFloat)
         let factor: CGFloat = 256
         let rows = parentNodeSize.height / factor
         let columns = parentNodeSize.width / factor
         let parentNode = SKSpriteNode()
         parentNode.size = parentNodeSize
-        parentNode.position = CGPoint(x: 0, y: 0)
-        parentNode.zPosition = -1
+        parentNode.position = parentNodePosition
         for rowIndex in 0..<Int(rows + 1) {
             for colIndex in 0..<Int(columns + 1) {
                 let node = SKSpriteNode()
@@ -372,33 +336,12 @@ class GameScene: SKScene, ObservableObject {
         }
         gameWorld = parentNode
         addChild(parentNode)
-        
-        
-        if gameCamera == nil {
-            gameCamera = SKCameraNode()
-            addChild(gameCamera)
-            camera = gameCamera
-        }
-    }
-    
-    private func addCameraBackgroundForDebug() {
-        if gameCamera == nil {
-            return
-        }
-        
-        // Create a sprite node for the camera's background
-        let cameraBackground = SKSpriteNode(color: .blue.withAlphaComponent(0.2), size: size)
-        cameraBackground.zPosition = 10 // Ensure it's behind other nodes
-        cameraBackground.position = CGPoint(x: 0, y: 0) // Position at the camera's origin
-
-        // Add the background sprite as a child of the camera node
-        gameCamera.addChild(cameraBackground)
     }
     
     private func createNextLevelPortal(_ portal: Witwiz_NextLevelPortalState) {
         nextLevelPortal?.removeFromParent()
         let position = CGPoint(x: portal.position.x.cgFloat, y: portal.position.y.cgFloat)
-        let size = CGSize(width: portal.boundingBox.width.cgFloat, height: portal.boundingBox.height.cgFloat)
+        let size = CGSize(width: portal.size.width.cgFloat, height: portal.size.height.cgFloat)
         let node = SKSpriteNode()
         node.color = .cyan.withAlphaComponent(0.75)
         node.position = position
@@ -409,19 +352,19 @@ class GameScene: SKScene, ObservableObject {
     
     private func createObstacles(_ obstacles: [Witwiz_ObstacleState]) {
         for obstacle in obstacles {
-            if let node = gameWorld?.childNode(withName: "obstacle\(obstacle.obstacleID)") {
+            if let node = gameWorld?.childNode(withName: "obstacle\(obstacle.id)") {
                 node.position = CGPoint(x: obstacle.position.x.cgFloat, y: obstacle.position.y.cgFloat)
             } else {
                 let node = SKSpriteNode()
-                switch obstacle.obstacleID {
+                switch obstacle.id {
                 case 1:
                     node.color = .magenta.withAlphaComponent(0.5)
                 default:
                     break
                 }
-                node.name = "obstacle\(obstacle.obstacleID)"
+                node.name = "obstacle\(obstacle.id)"
                 node.position = CGPoint(x: obstacle.position.x.cgFloat, y: obstacle.position.y.cgFloat)
-                node.size = CGSize(width: obstacle.boundingBox.width.cgFloat, height: obstacle.boundingBox.height.cgFloat)
+                node.size = CGSize(width: obstacle.size.width.cgFloat, height: obstacle.size.height.cgFloat)
                 gameWorld?.addChild(node)
             }
         }
@@ -442,6 +385,6 @@ extension CGFloat {
 
 extension Array<Witwiz_PlayerState> {
     func withID(_ playerID: Int32) -> Witwiz_PlayerState? {
-        return first { $0.playerID == playerID }
+        return first { $0.id == playerID }
     }
 }

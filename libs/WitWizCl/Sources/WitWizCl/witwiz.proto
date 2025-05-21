@@ -29,42 +29,41 @@ message PlayerInput {
 }
 
 message GameStateUpdate {
-    int32 level_id = 1;
+    bool is_initial = 1;
     bool game_started = 2;
     bool game_over = 3;
     bool game_paused = 4;
-    bool is_initial = 5;
-    Size viewport_size = 6;
+    int32 level_id = 5;
+    Point level_position = 6;
     Size level_size = 7;
-    Bounds viewport_bounds = 8;
-    Bounds level_bounds = 9;
-    repeated int32 character_ids = 10;
-    repeated PlayerState players = 11;
-    NextLevelPortalState next_level_portal = 12;
-    repeated ObstacleState obstacles = 13;
+    NextLevelPortalState next_level_portal = 8;
+    repeated int32 character_ids = 9;
+    repeated PlayerState players = 10;
+    repeated ObstacleState obstacles = 11;
 }
 
 message PlayerState {
-    int32 player_id = 1;
+    int32 id = 1;
     int32 character_id = 2;
-    float maxSpeed = 3;
-    Point levelPosition = 4;
-    Point viewportPosition = 5;
+    float max_speed = 3;
+    Point position = 4;
+    Size size = 5;
     Vector velocity = 6;
     Vector acceleration = 7;
-    Vector targetVelocity = 8;
-    Size bounding_box = 9;
+    Vector target_velocity = 8;
+    
 }
 
 message NextLevelPortalState {
-    Point position = 1;
-    Size bounding_box = 2;
+    int32 id = 1;
+    Point position = 2;
+    Size size = 3;
 }
 
 message ObstacleState {
-    int32 obstacle_id = 1;
+    int32 id = 1;
     Point position = 2;
-    Size bounding_box = 3;
+    Size size = 3;
 }
 
 message Size {
@@ -80,11 +79,4 @@ message Point {
 message Vector {
     float x = 1;
     float y = 2;
-}
-
-message Bounds {
-    float min_x = 1;
-    float min_y = 2;
-    float max_x = 3;
-    float max_y = 4;
 }
