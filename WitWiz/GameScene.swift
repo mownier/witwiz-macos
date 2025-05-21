@@ -262,6 +262,9 @@ class GameScene: SKScene, ObservableObject {
             nextLevelPortal = nil
             gameCamera?.removeFromParent()
             gameCamera = nil
+            gameWorld?.removeAllChildren()
+            gameWorld?.removeFromParent()
+            gameWorld = nil
             camera = nil
             removeAllChildren()
             createGameLevel(state.levelID)
