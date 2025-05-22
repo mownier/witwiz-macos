@@ -182,6 +182,11 @@ public struct Witwiz_GameStateUpdate: @unchecked Sendable {
     set {_uniqueStorage()._obstacles = newValue}
   }
 
+  public var levelEdges: [Witwiz_LevelEdgeState] {
+    get {return _storage._levelEdges}
+    set {_uniqueStorage()._levelEdges = newValue}
+  }
+
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
@@ -364,6 +369,39 @@ public struct Witwiz_Vector: Sendable {
   public init() {}
 }
 
+public struct Witwiz_LevelEdgeState: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  public var id: Int32 = 0
+
+  public var position: Witwiz_Point {
+    get {return _position ?? Witwiz_Point()}
+    set {_position = newValue}
+  }
+  /// Returns true if `position` has been explicitly set.
+  public var hasPosition: Bool {return self._position != nil}
+  /// Clears the value of `position`. Subsequent reads from it will return its default value.
+  public mutating func clearPosition() {self._position = nil}
+
+  public var size: Witwiz_Size {
+    get {return _size ?? Witwiz_Size()}
+    set {_size = newValue}
+  }
+  /// Returns true if `size` has been explicitly set.
+  public var hasSize: Bool {return self._size != nil}
+  /// Clears the value of `size`. Subsequent reads from it will return its default value.
+  public mutating func clearSize() {self._size = nil}
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+
+  fileprivate var _position: Witwiz_Point? = nil
+  fileprivate var _size: Witwiz_Size? = nil
+}
+
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
 
 fileprivate let _protobuf_package = "witwiz"
@@ -443,6 +481,7 @@ extension Witwiz_GameStateUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageI
     9: .standard(proto: "character_ids"),
     10: .same(proto: "players"),
     11: .same(proto: "obstacles"),
+    12: .standard(proto: "level_edges"),
   ]
 
   fileprivate class _StorageClass {
@@ -457,6 +496,7 @@ extension Witwiz_GameStateUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageI
     var _characterIds: [Int32] = []
     var _players: [Witwiz_PlayerState] = []
     var _obstacles: [Witwiz_ObstacleState] = []
+    var _levelEdges: [Witwiz_LevelEdgeState] = []
 
     #if swift(>=5.10)
       // This property is used as the initial default value for new instances of the type.
@@ -482,6 +522,7 @@ extension Witwiz_GameStateUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageI
       _characterIds = source._characterIds
       _players = source._players
       _obstacles = source._obstacles
+      _levelEdges = source._levelEdges
     }
   }
 
@@ -511,6 +552,7 @@ extension Witwiz_GameStateUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageI
         case 9: try { try decoder.decodeRepeatedInt32Field(value: &_storage._characterIds) }()
         case 10: try { try decoder.decodeRepeatedMessageField(value: &_storage._players) }()
         case 11: try { try decoder.decodeRepeatedMessageField(value: &_storage._obstacles) }()
+        case 12: try { try decoder.decodeRepeatedMessageField(value: &_storage._levelEdges) }()
         default: break
         }
       }
@@ -556,6 +598,9 @@ extension Witwiz_GameStateUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageI
       if !_storage._obstacles.isEmpty {
         try visitor.visitRepeatedMessageField(value: _storage._obstacles, fieldNumber: 11)
       }
+      if !_storage._levelEdges.isEmpty {
+        try visitor.visitRepeatedMessageField(value: _storage._levelEdges, fieldNumber: 12)
+      }
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -576,6 +621,7 @@ extension Witwiz_GameStateUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageI
         if _storage._characterIds != rhs_storage._characterIds {return false}
         if _storage._players != rhs_storage._players {return false}
         if _storage._obstacles != rhs_storage._obstacles {return false}
+        if _storage._levelEdges != rhs_storage._levelEdges {return false}
         return true
       }
       if !storagesAreEqual {return false}
@@ -868,6 +914,54 @@ extension Witwiz_Vector: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementa
   public static func ==(lhs: Witwiz_Vector, rhs: Witwiz_Vector) -> Bool {
     if lhs.x != rhs.x {return false}
     if lhs.y != rhs.y {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Witwiz_LevelEdgeState: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".LevelEdgeState"
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    1: .same(proto: "id"),
+    2: .same(proto: "position"),
+    3: .same(proto: "size"),
+  ]
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularInt32Field(value: &self.id) }()
+      case 2: try { try decoder.decodeSingularMessageField(value: &self._position) }()
+      case 3: try { try decoder.decodeSingularMessageField(value: &self._size) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    if self.id != 0 {
+      try visitor.visitSingularInt32Field(value: self.id, fieldNumber: 1)
+    }
+    try { if let v = self._position {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
+    } }()
+    try { if let v = self._size {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 3)
+    } }()
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Witwiz_LevelEdgeState, rhs: Witwiz_LevelEdgeState) -> Bool {
+    if lhs.id != rhs.id {return false}
+    if lhs._position != rhs._position {return false}
+    if lhs._size != rhs._size {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

@@ -40,6 +40,7 @@ message GameStateUpdate {
     repeated int32 character_ids = 9;
     repeated PlayerState players = 10;
     repeated ObstacleState obstacles = 11;
+    repeated LevelEdgeState level_edges = 12;
 }
 
 message PlayerState {
@@ -79,4 +80,10 @@ message Point {
 message Vector {
     float x = 1;
     float y = 2;
+}
+
+message LevelEdgeState {
+    int32 id = 1;
+    Point position = 2;
+    Size size = 3;
 }

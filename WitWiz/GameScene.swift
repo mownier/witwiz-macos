@@ -257,7 +257,7 @@ class GameScene: SKScene, ObservableObject {
             gameWorld?.removeFromParent()
             gameWorld = nil
             removeAllChildren()
-            createWorld(state.levelSize, state.levelPosition)
+            createWorld(state.levelSize, state.levelPosition, state.levelEdges)
         }
         createObstacles(state.obstacles)
         state.players.forEach { player in
@@ -281,8 +281,7 @@ class GameScene: SKScene, ObservableObject {
             }
         }
         if !state.players.isEmpty {
-            print("world pos", state.levelPosition)
-            updateWorld(state.levelPosition)
+            updateWorld(state.levelPosition, state.levelEdges)
         }
         playerIDs.forEach { playerID in
             if !state.players.contains(where: { $0.id == playerID }) {
@@ -291,15 +290,20 @@ class GameScene: SKScene, ObservableObject {
         }
     }
     
-    private func updateWorld(_ levelPoint: Witwiz_Point) {
+    private func updateWorld(_ levelPoint: Witwiz_Point, _ levelEdges: [Witwiz_LevelEdgeState]) {
         if gameWorld == nil {
             return
+        }
+        for levelEdge in levelEdges {
+            if let node = gameWorld?.childNode(withName: "levelEdge\(levelEdge.id)") {
+                node.position = CGPoint(x: levelEdge.position.x.cgFloat, y: levelEdge.position.y.cgFloat)
+            }
         }
         let position = CGPoint(x: levelPoint.x.cgFloat, y: levelPoint.y.cgFloat)
         gameWorld.position = position
     }
     
-    private func createWorld(_ levelSize: Witwiz_Size, _ levelPoint: Witwiz_Point) {
+    private func createWorld(_ levelSize: Witwiz_Size, _ levelPoint: Witwiz_Point, _ levelEdges: [Witwiz_LevelEdgeState]) {
         switch levelID {
         case 1: backgroundColor = .systemBlue
         case 2: backgroundColor = .systemPink
@@ -333,6 +337,14 @@ class GameScene: SKScene, ObservableObject {
                 }
                 parentNode.addChild(node)
             }
+        }
+        for levelEdge in levelEdges {
+            let node = SKSpriteNode()
+            node.name = "levelEdge\(levelEdge.id)"
+            node.size = CGSize(width: levelEdge.size.width.cgFloat, height: levelEdge.size.height.cgFloat)
+            node.position = CGPoint(x: levelEdge.position.x.cgFloat, y: levelEdge.position.y.cgFloat)
+            node.color = .green.withAlphaComponent(0.5)
+            parentNode.addChild(node)
         }
         gameWorld = parentNode
         addChild(parentNode)
