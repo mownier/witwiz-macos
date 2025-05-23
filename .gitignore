@@ -58,4 +58,4 @@ Thumbs.db
 # Build server files
 project.xcworkspace/
 
-WitWiz/DownloadableAssets.xcassets
+WitWiz/Downloadables/

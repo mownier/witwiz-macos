@@ -23,8 +23,8 @@ class GameScene: SKScene, ObservableObject {
     var moveLeftKeyPressed: Bool = false
     var pauseGameKeyPressed: Bool = false
     
-    var gameWorld: SKSpriteNode!
-    var nextLevelPortal: SKSpriteNode!
+    var gameWorld: SKNode!
+    var gameCamera: SKCameraNode!
     
     @Published var clientOkay: Bool = false
     @Published var gameStarted: Bool = false
@@ -119,7 +119,6 @@ class GameScene: SKScene, ObservableObject {
             } catch {
                 updateClientOkay(false)
             }
-            removeAllChildren()
             joinGameOkTask?.cancel()
             processGameStateTask?.cancel()
             joinGameOkTask = nil
@@ -131,9 +130,11 @@ class GameScene: SKScene, ObservableObject {
             yourID = 0
             levelID = 0
             gameWorld?.removeAllChildren()
+            gameWorld?.removeFromParent()
             gameWorld = nil
-            nextLevelPortal?.removeFromParent()
-            nextLevelPortal = nil
+            gameCamera?.removeFromParent()
+            gameCamera = nil
+            camera = nil
             updateGameStarted(false)
             updateSelectCharacter(false)
             updateGameOver(false)
@@ -216,7 +217,7 @@ class GameScene: SKScene, ObservableObject {
                 break
             }
         }
-        let client = await WitWizClient().host("192.168.1.6").port(40041).useTLS(false)
+        let client = await WitWizClient().host("localhost").port(40041).useTLS(false)
         try await client.joinGame(piStream, gsContinuation, okContinuation)
     }
     
@@ -240,125 +241,156 @@ class GameScene: SKScene, ObservableObject {
         if state.gameOver {
             size = .zero
             backgroundColor = .gray
-            nextLevelPortal?.removeFromParent()
-            nextLevelPortal = nil
             levelID = 0
-            removeAllChildren()
+            gameWorld?.removeAllChildren()
+            gameWorld?.removeFromParent()
+            gameWorld = nil
+            gameCamera?.removeFromParent()
+            gameCamera = nil
+            camera = nil
             return
         }
-        if state.hasNextLevelPortal, nextLevelPortal == nil {
+        if state.hasNextLevelPortal {
             createNextLevelPortal(state.nextLevelPortal)
         }
         if state.levelID != 0 && levelID != state.levelID {
             levelID = state.levelID
-            nextLevelPortal?.removeFromParent()
-            nextLevelPortal = nil
-            gameWorld?.removeAllChildren()
-            gameWorld?.removeFromParent()
-            gameWorld = nil
-            removeAllChildren()
             createWorld(state.levelSize, state.levelPosition, state.levelEdges)
         }
         createObstacles(state.obstacles)
         state.players.forEach { player in
-            if state.gameOver {
-                childNode(withName: "player\(player.id)")?.removeFromParent()
-                return
-            }
             if player.id == yourID {
                 updateSelectCharacter(!characterIds.contains(player.characterID))
             }
-            if let node = gameWorld?.childNode(withName: "player\(player.id)") {
-                let pos = CGPoint(x: player.position.x.cgFloat, y: player.position.y.cgFloat)
-                node.position = pos
+            if let node = gameWorld?.childNode(withName: "player\(player.id)") as? BaseCharacter {
+                if node.characterID == player.characterID {
+                    let pos = CGPoint(x: player.position.x.cgFloat, y: player.position.y.cgFloat)
+                    node.position = pos
+                } else if characterIds.contains(player.characterID) {
+                    node.removeFromParent()
+                    createPlayer(player)
+                }
             } else if characterIds.contains(player.characterID) {
-                let position = CGPoint(x: player.position.x.cgFloat, y: player.position.y.cgFloat)
-                let node: BaseCharacter = BaseCharacter(characterID: player.characterID)
-                node.position = position
-                node.name = "player\(player.id)"
-                gameWorld?.addChild(node)
-                playerIDs.insert(player.id)
+                createPlayer(player)
             }
+            playerIDs.insert(player.id)
         }
         if !state.players.isEmpty {
             updateWorld(state.levelPosition, state.levelEdges)
         }
-        playerIDs.forEach { playerID in
+        let toRemovePlayers = playerIDs.compactMap { playerID -> Int32? in
             if !state.players.contains(where: { $0.id == playerID }) {
-                childNode(withName: "player\(playerID)")?.removeFromParent()
+                gameWorld?.childNode(withName: "player\(playerID)")?.removeFromParent()
+                return playerID
             }
+            return nil
         }
+        toRemovePlayers.forEach { playerIDs.remove($0) }
     }
     
     private func updateWorld(_ levelPoint: Witwiz_Point, _ levelEdges: [Witwiz_LevelEdgeState]) {
-        if gameWorld == nil {
-            return
-        }
         for levelEdge in levelEdges {
             if let node = gameWorld?.childNode(withName: "levelEdge\(levelEdge.id)") {
                 node.position = CGPoint(x: levelEdge.position.x.cgFloat, y: levelEdge.position.y.cgFloat)
             }
         }
-        let position = CGPoint(x: levelPoint.x.cgFloat, y: levelPoint.y.cgFloat)
-        gameWorld.position = position
+        let position = CGPoint(x: levelPoint.x.cgFloat * -1, y: levelPoint.y.cgFloat * -1)
+        let rect = CGRect(origin: position, size: size)
+        gameCamera?.position = CGPoint(x: rect.midX, y: rect.midY)
+    }
+    
+    private func createPlayer(_ player: Witwiz_PlayerState) {
+        let position = CGPoint(x: player.position.x.cgFloat, y: player.position.y.cgFloat)
+        let node: BaseCharacter = BaseCharacter(characterID: player.characterID)
+        node.position = position
+        node.name = "player\(player.id)"
+        node.characterID = player.characterID
+        gameWorld?.addChild(node)
     }
     
     private func createWorld(_ levelSize: Witwiz_Size, _ levelPoint: Witwiz_Point, _ levelEdges: [Witwiz_LevelEdgeState]) {
+        gameWorld?.removeAllChildren()
+        gameWorld?.removeFromParent()
+        gameWorld = nil
+        
+        gameCamera?.removeFromParent()
+        gameCamera = nil
+        camera = nil
+        
         switch levelID {
         case 1: backgroundColor = .systemBlue
         case 2: backgroundColor = .systemPink
         default: return
         }
-        let parentNodeSize = CGSize(width: levelSize.width.cgFloat, height: levelSize.height.cgFloat)
-        let parentNodePosition = CGPoint(x: levelPoint.x.cgFloat, y: levelPoint.x.cgFloat)
-        let factor: CGFloat = 256
-        let rows = parentNodeSize.height / factor
-        let columns = parentNodeSize.width / factor
-        let parentNode = SKSpriteNode()
-        parentNode.size = parentNodeSize
-        parentNode.position = parentNodePosition
-        for rowIndex in 0..<Int(rows + 1) {
-            for colIndex in 0..<Int(columns + 1) {
-                let node = SKSpriteNode()
-                node.size = CGSize(width: factor, height: factor)
-                node.position = CGPoint(x: CGFloat(colIndex) * factor, y: CGFloat(rowIndex) * factor)
-                if rowIndex % 2 == 0 {
-                    if colIndex % 2 == 0 {
-                        node.color = .lightGray
+        
+        let parentNode = SKNode()
+        
+        // Tile map
+        let tileSet = SKTileSet(named: "Level Tile Set")!
+        let tileSize: CGSize = CGSize(width: 32, height: 32)
+        let tileMap = SKTileMapNode()
+        tileMap.anchorPoint = CGPoint(x: 0, y: 0)
+        tileMap.tileSet = tileSet
+        tileMap.tileSize = tileSize
+        tileMap.numberOfColumns = Int(levelSize.width.cgFloat / tileSize.width)
+        tileMap.numberOfRows = Int(levelSize.height.cgFloat / tileSize.height)
+        for row in 0..<tileMap.numberOfRows {
+            for col in 0..<tileMap.numberOfColumns {
+                let tileID: String
+                if row % 2 == 0 {
+                    if col % 2 == 0 {
+                        tileID = levelID == 2 ? "3" : "1"
                     } else {
-                        node.color = .gray
+                        tileID = levelID == 2 ? "4" : "2"
                     }
                 } else {
-                    if colIndex % 2 == 0 {
-                        node.color = .gray
+                    if col % 2 == 0 {
+                        tileID = levelID == 2 ? "4" : "2"
                     } else {
-                        node.color = .lightGray
+                        tileID = levelID == 2 ? "3" : "1"
                     }
                 }
-                parentNode.addChild(node)
+                let tileGroup = tileSet.tileGroups.first(where: { $0.name == "Tile \(tileID)" })!
+                tileMap.setTileGroup(tileGroup, forColumn: col, row: row)
             }
         }
+        parentNode.addChild(tileMap)
+        
+        // Level edges
         for levelEdge in levelEdges {
             let node = SKSpriteNode()
             node.name = "levelEdge\(levelEdge.id)"
             node.size = CGSize(width: levelEdge.size.width.cgFloat, height: levelEdge.size.height.cgFloat)
             node.position = CGPoint(x: levelEdge.position.x.cgFloat, y: levelEdge.position.y.cgFloat)
-            node.color = .green.withAlphaComponent(0.5)
+            node.color = .green.withAlphaComponent(0.0)
             parentNode.addChild(node)
         }
+        
+        // Set game world
         gameWorld = parentNode
         addChild(parentNode)
+        
+        // Set camera
+        let cam = SKCameraNode()
+        let position = CGPoint(x: levelPoint.x.cgFloat * -1, y: levelPoint.y.cgFloat * -1)
+        let rect = CGRect(origin: position, size: size)
+        cam.position = CGPoint(x: rect.midX, y: rect.midY)
+        gameCamera = cam
+        camera = cam
+        addChild(cam)
     }
     
     private func createNextLevelPortal(_ portal: Witwiz_NextLevelPortalState) {
-        nextLevelPortal?.removeFromParent()
+        if gameWorld?.childNode(withName: "next_level_portal") != nil {
+            return
+        }
         let position = CGPoint(x: portal.position.x.cgFloat, y: portal.position.y.cgFloat)
         let size = CGSize(width: portal.size.width.cgFloat, height: portal.size.height.cgFloat)
         let node = SKSpriteNode()
+        node.name = "next_level_portal"
         node.color = .cyan.withAlphaComponent(0.75)
         node.position = position
         node.size = size
-        nextLevelPortal = node
         gameWorld?.addChild(node)
     }
     
