@@ -6,6 +6,9 @@ import GRPCCore
 import GRPCNIOTransportHTTP2
 
 class GameScene: SKScene, ObservableObject {
+    let tileSet = SKTileSet(named: "Level Tile Set")!
+    let tileSize: CGFloat = 32
+    
     var connectClientTask: Task<Void, Error>?
     var processGameStateTask: Task<Void, Error>?
     var joinGameOkTask: Task<Void, Error>?
@@ -14,6 +17,7 @@ class GameScene: SKScene, ObservableObject {
     var levelID: Int32 = 0
     var characterIds: [Int32] = []
     var playerIDs: Set<Int32> = []
+    var tileChunks: [Witwiz_TileChunk] = []
     
     var playerInputContinuation: AsyncStream<Witwiz_PlayerInput>.Continuation?
     
@@ -25,6 +29,7 @@ class GameScene: SKScene, ObservableObject {
     
     var gameWorld: SKNode!
     var gameCamera: SKCameraNode!
+    var tileMap: SKTileMapNode!
     
     @Published var clientOkay: Bool = false
     @Published var gameStarted: Bool = false
@@ -127,8 +132,12 @@ class GameScene: SKScene, ObservableObject {
             playerInputContinuation = nil
             characterIds = []
             playerIDs = []
+            tileChunks = []
             yourID = 0
             levelID = 0
+            tileMap?.removeAllChildren()
+            tileMap?.removeFromParent()
+            tileMap = nil
             gameWorld?.removeAllChildren()
             gameWorld?.removeFromParent()
             gameWorld = nil
@@ -226,6 +235,9 @@ class GameScene: SKScene, ObservableObject {
             state.players.forEach { player in
                 yourID = player.id
             }
+            if !state.tileChunks.isEmpty {
+                tileChunks = state.tileChunks
+            }
             return
         }
         updateGameStarted(state.gameStarted)
@@ -309,6 +321,10 @@ class GameScene: SKScene, ObservableObject {
     }
     
     private func createWorld(_ levelSize: Witwiz_Size, _ levelPoint: Witwiz_Point, _ levelEdges: [Witwiz_LevelEdgeState]) {
+        tileMap?.removeAllChildren()
+        tileMap?.removeFromParent()
+        tileMap = nil
+        
         gameWorld?.removeAllChildren()
         gameWorld?.removeFromParent()
         gameWorld = nil
@@ -326,35 +342,21 @@ class GameScene: SKScene, ObservableObject {
         let parentNode = SKNode()
         
         // Tile map
-        let tileSet = SKTileSet(named: "Level Tile Set")!
-        let tileSize: CGSize = CGSize(width: 32, height: 32)
-        let tileMap = SKTileMapNode()
+        tileMap = SKTileMapNode()
         tileMap.anchorPoint = CGPoint(x: 0, y: 0)
         tileMap.tileSet = tileSet
-        tileMap.tileSize = tileSize
-        tileMap.numberOfColumns = Int(levelSize.width.cgFloat / tileSize.width)
-        tileMap.numberOfRows = Int(levelSize.height.cgFloat / tileSize.height)
-        for row in 0..<tileMap.numberOfRows {
-            for col in 0..<tileMap.numberOfColumns {
-                let tileID: String
-                if row % 2 == 0 {
-                    if col % 2 == 0 {
-                        tileID = levelID == 2 ? "3" : "1"
-                    } else {
-                        tileID = levelID == 2 ? "4" : "2"
-                    }
-                } else {
-                    if col % 2 == 0 {
-                        tileID = levelID == 2 ? "4" : "2"
-                    } else {
-                        tileID = levelID == 2 ? "3" : "1"
-                    }
-                }
-                let tileGroup = tileSet.tileGroups.first(where: { $0.name == "Tile \(tileID)" })!
-                tileMap.setTileGroup(tileGroup, forColumn: col, row: row)
+        tileMap.tileSize = CGSize(width: tileSize, height: tileSize)
+        tileMap.numberOfColumns = Int(levelSize.width.cgFloat / tileSize)
+        tileMap.numberOfRows = Int(levelSize.height.cgFloat / tileSize)
+        parentNode.addChild(tileMap)
+        
+        for tileChunk in tileChunks {
+            for tile in tileChunk.tiles {
+                let tileGroup = tileSet.tileGroups.first(where: { $0.name == "Tile \(tile.id)" })!
+                tileMap.setTileGroup(tileGroup, forColumn: Int(tile.col), row: Int(tile.row))
             }
         }
-        parentNode.addChild(tileMap)
+        tileChunks.removeAll()
         
         // Level edges
         for levelEdge in levelEdges {

@@ -41,6 +41,7 @@ message GameStateUpdate {
     repeated PlayerState players = 10;
     repeated ObstacleState obstacles = 11;
     repeated LevelEdgeState level_edges = 12;
+    repeated TileChunk tile_chunks = 13;
 }
 
 message PlayerState {
@@ -86,4 +87,16 @@ message LevelEdgeState {
     int32 id = 1;
     Point position = 2;
     Size size = 3;
+}
+
+message Tile {
+    int32 row = 1;
+    int32 col = 2;
+    int32 id = 3;
+}
+
+message TileChunk {
+    int32 row = 1;
+    int32 col = 2;
+    repeated Tile tiles = 3;
 }
