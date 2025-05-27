@@ -133,7 +133,11 @@ struct PackCommand: ParsableCommand {
         let packer = TexturePacker()
         do {
             print("Starting packing process for \(imageFiles.count) images...")
-            let (packedImage, atlasData) = try packer.pack(inputImageURLs: imageFiles, padding: padding, maxAtlasSize: maxAtlasSize)
+            let (packedImage, atlasData) = try packer.pack(
+                inputImageURLs: imageFiles,
+                padding: padding,
+                maxAtlasSize: maxAtlasSize
+            )
 
             let atlasFileName = "atlas.png"
             let dataFileName = "atlas.plist"

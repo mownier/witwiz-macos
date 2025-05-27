@@ -82,7 +82,7 @@ public class ImageUtilities {
                     continue
                 }
                 
-                let tileID = row*col + col + 1
+                let tileID = row*columns + col + 1
                 
                 let tileName = "tile_\(tileID)"
                 slicedTiles.append((tileName: tileName, cgImage: tileCGImage))

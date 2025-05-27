@@ -54,13 +54,42 @@ public class TexturePacker {
                                       bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else {
             throw ImageError.createCGContextFailed
         }
+        
+        // 1. Translate the origin to the top-left corner
+        context.translateBy(x: 0, y: CGFloat(atlasHeight))
+
+        // 2. Scale the Y-axis by -1 to flip it
+        context.scaleBy(x: 1, y: -1)
 
         context.setFillColor(CGColor(red: 0, green: 0, blue: 0, alpha: 0)) // Transparent background
         context.fill(CGRect(x: 0, y: 0, width: atlasWidth, height: atlasHeight))
 
         for sprite in sprites {
+            // Original rect in the desired top-left origin, Y-down system
             let rect = CGRect(x: sprite.packedX, y: sprite.packedY, width: sprite.width, height: sprite.height)
-            context.draw(sprite.cgImage, in: rect)
+
+            // *** Compensation for the flipped image drawing ***
+            // Before drawing the image, you need to apply a *local* transformation
+            // that effectively flips the image back upright within its drawing rectangle.
+
+            // 1. Save the current graphics state (matrix)
+            context.saveGState()
+
+            // 2. Translate to the origin of where the sprite will be drawn (top-left of the sprite's rect)
+            context.translateBy(x: rect.origin.x, y: rect.origin.y)
+
+            // 3. Flip the Y-axis *again* (locally) to un-flip the image
+            context.scaleBy(x: 1, y: -1)
+
+            // 4. Translate back by the height of the image to align it correctly
+            // (since scaling by -1 flips around the current origin, we need to shift it down)
+            context.translateBy(x: 0, y: -rect.height)
+
+            // 5. Draw the image at (0,0) of this *local* transformed coordinate system
+            context.draw(sprite.cgImage, in: CGRect(x: 0, y: 0, width: rect.width, height: rect.height))
+
+            // 6. Restore the graphics state to get back to the global top-left origin, Y-down system
+            context.restoreGState()
         }
 
         guard let finalCGImage = context.makeImage() else {
