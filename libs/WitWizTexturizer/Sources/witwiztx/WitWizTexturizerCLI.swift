@@ -56,24 +56,29 @@ struct SliceCommand: ParsableCommand {
         
         do {
             let originalImage = try ImageUtilities.loadCGImage(from: inputFileURL)
-            let slicedTiles = try ImageUtilities.sliceCGImageIntoTiles(image: originalImage, tileSize: tileSize)
+            let imageSliceOutput = try ImageUtilities.sliceCGImageIntoTiles(image: originalImage, tileSize: tileSize)
 
-            if slicedTiles.isEmpty {
+            if imageSliceOutput.slicedTiles.isEmpty {
                 print("No tiles were generated. Check input image dimensions and tile size.")
                 throw ExitCode.failure
             }
 
-            for (tileName, cgImage) in slicedTiles {
-                let tileURL = outputDirectoryURL.appendingPathComponent("\(tileName).png")
-                let pngData = try ImageUtilities.createPNGData(from: cgImage)
+            for slicedTile in imageSliceOutput.slicedTiles {
+                let tileURL = outputDirectoryURL.appendingPathComponent("\(slicedTile.name).png")
+                let pngData = try ImageUtilities.createPNGData(from: slicedTile.cgImage)
                 try pngData.write(to: tileURL)
-                // print("Saved: \(tileURL.lastPathComponent)") // Too verbose for many tiles
             }
-            print("Successfully sliced \(slicedTiles.count) tiles to: '\(outputDirectoryURL.path)'")
-
+            
+            let tilesURL = outputDirectoryURL.appendingPathComponent("tiles.json")
+            let jsonData = try JSONEncoder().encode(imageSliceOutput.tiles)
+            try jsonData.write(to: tilesURL)
+            
+            print("Successfully sliced \(imageSliceOutput.slicedTiles.count) tiles to: '\(outputDirectoryURL.path)'")
+            
         } catch let error as ImageError {
             print("Slicing error: \(error.localizedDescription)")
             throw ExitCode.failure
+            
         } catch {
             print("An unexpected error occurred during slicing: \(error.localizedDescription)")
             throw ExitCode.failure

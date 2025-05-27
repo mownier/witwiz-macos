@@ -27,3 +27,20 @@ public struct Metadata: Encodable {
     public let name: String
     public let version: String
 }
+
+public struct SlicedTile {
+    public let name: String
+    public let cgImage: CGImage
+    public let id: Int
+}
+
+public struct Tile: Encodable {
+    public let row: Int
+    public let col: Int
+    public let id: Int
+}
+
+public struct ImageSliceOutput {
+    public let slicedTiles: [SlicedTile]
+    public let tiles: [Tile]
+}

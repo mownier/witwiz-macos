@@ -5,11 +5,14 @@ import AppKit
 public class TexturePacker {
     public init() {}
 
-    public func pack(inputImageURLs: [URL], padding: Int = 2, maxAtlasSize: Int = 4096) throws -> (CGImage, AtlasData) {
+    public func pack(inputImageURLs: [URL], padding: Int, maxAtlasSize: Int) throws -> (CGImage, AtlasData) {
         var sprites: [Sprite] = []
 
         for url in inputImageURLs {
             let cgImage = try ImageUtilities.loadCGImage(from: url)
+            if cgImage.isCompletelyTransparent() {
+                continue
+            }
             sprites.append(Sprite(name: url.deletingPathExtension().lastPathComponent,
                                   cgImage: cgImage,
                                   width: cgImage.width,
