@@ -4,9 +4,9 @@ import SpriteKit
 import WitWizCl
 import GRPCCore
 import GRPCNIOTransportHTTP2
+import AppKit
 
 class GameScene: SKScene, ObservableObject {
-    let tileSet = SKTileSet(named: "Level Tile Set")!
     let tileSize: CGFloat = 32
     
     var connectClientTask: Task<Void, Error>?
@@ -320,6 +320,42 @@ class GameScene: SKScene, ObservableObject {
         gameWorld?.addChild(node)
     }
     
+    private func createTileSet() -> SKTileSet {
+        let atlasName: String
+        switch levelID {
+        case 3: atlasName = "level_3_atlas"
+        default: atlasName = "level_default_atlas"
+        }
+        
+        // 1. Load the individual SKTexture objects from your custom atlas data
+        let customTextures = loadCustomAtlasTextures(imageAssetName: atlasName, plistFileName: atlasName)!
+
+        // 2. Create SKTileDefinition objects
+        var tileDefinitions: [String: SKTileDefinition] = [:]
+
+        for (textureName, texture) in customTextures {
+            texture.filteringMode = .nearest // Important for pixel art
+            let tileDef = SKTileDefinition(texture: texture)
+            tileDef.size = CGSize(width: tileSize, height: tileSize)
+            tileDefinitions[textureName] = tileDef
+        }
+
+        // 3. Create SKTileGroup objects
+        var tileGroups: [String: SKTileGroup] = [:]
+        for (name, definition) in tileDefinitions {
+            let group = SKTileGroup(tileDefinition: definition)
+            group.name = name
+            tileGroups[name] = group
+        }
+
+        // 4. Assemble an SKTileSet from your groups
+        let allTileGroups = Array(tileGroups.values)
+        let tileSet = SKTileSet(tileGroups: allTileGroups)
+        tileSet.name = "Tile set for \(atlasName)"
+        
+        return tileSet
+    }
+    
     private func createWorld(_ levelSize: Witwiz_Size, _ levelPoint: Witwiz_Point, _ levelEdges: [Witwiz_LevelEdgeState]) {
         tileMap?.removeAllChildren()
         tileMap?.removeFromParent()
@@ -336,24 +372,26 @@ class GameScene: SKScene, ObservableObject {
         switch levelID {
         case 1: backgroundColor = .systemBlue
         case 2: backgroundColor = .systemPink
+        case 3: backgroundColor = .systemMint
         default: return
         }
         
         let parentNode = SKNode()
         
         // Tile map
+        let tileSet = createTileSet()
         tileMap = SKTileMapNode()
         tileMap.anchorPoint = CGPoint(x: 0, y: 0)
-        tileMap.tileSet = tileSet
         tileMap.tileSize = CGSize(width: tileSize, height: tileSize)
         tileMap.numberOfColumns = Int(levelSize.width.cgFloat / tileSize)
         tileMap.numberOfRows = Int(levelSize.height.cgFloat / tileSize)
+        tileMap.tileSet = tileSet
         parentNode.addChild(tileMap)
         
         for tileChunk in tileChunks {
             for tile in tileChunk.tiles {
-                let tileGroup = tileSet.tileGroups.first(where: { $0.name == "Tile \(tile.id)" })!
-                tileMap.setTileGroup(tileGroup, forColumn: Int(tile.col), row: Int(tile.row))
+                let tileGroup = tileSet.tileGroups.first(where: { $0.name == "tile_\(tile.id)" })!
+                tileMap.setTileGroup(tileGroup, forColumn: Int(tile.col), row: tileMap.numberOfRows - Int(tile.row) - 1)
             }
         }
         tileChunks.removeAll()
@@ -415,6 +453,34 @@ class GameScene: SKScene, ObservableObject {
             }
         }
     }
+    
+    private func loadCustomAtlasTextures(imageAssetName: String, plistFileName: String) -> [String: SKTexture]? {
+        // Load the main atlas image from Assets.xcassets
+        let nsImage = NSImage(named: imageAssetName)!
+        let cgImage = nsImage.cgImage(forProposedRect: nil, context: nil, hints: nil)!
+        
+        // Load and parse the plist data
+        let plistPath = Bundle.main.path(forResource: plistFileName, ofType: "plist")!
+        let plistData = try! Data(contentsOf: URL(fileURLWithPath: plistPath))
+        let dictionary = try! PropertyListSerialization.propertyList(from: plistData, format: nil) as! [String: Any]
+     
+        var textures: [String: SKTexture] = [:]
+
+        // Extract frame data and create textures
+        if let framesDict = dictionary["frames"] as? [String: [String: Any]] {
+            for (name, frameInfo) in framesDict {
+                if let frameString = frameInfo["frame"] as? String,
+                   let rect = CGRect(string: frameString) {
+                    if let croppedCGImage = cgImage.cropping(to: rect) {
+                        let texture = SKTexture(cgImage: croppedCGImage)
+                        textures[name] = texture
+                    }
+                }
+            }
+        }
+        
+        return textures.isEmpty ? nil : textures
+    }
 }
 
 extension Float {
@@ -432,5 +498,23 @@ extension CGFloat {
 extension Array<Witwiz_PlayerState> {
     func withID(_ playerID: Int32) -> Witwiz_PlayerState? {
         return first { $0.id == playerID }
+    }
+}
+
+// Helper extension to parse CGRect from string, if your plist uses "{{x,y},{w,h}}"
+// This extension is cross-platform.
+extension CGRect {
+    init?(string: String) {
+        let cleanString = string.replacingOccurrences(of: "{", with: "").replacingOccurrences(of: "}", with: "")
+        let components = cleanString.split(separator: ",").map { Double($0.trimmingCharacters(in: .whitespacesAndNewlines)) }
+
+        guard components.count == 4,
+              let x = components[0],
+              let y = components[1],
+              let width = components[2],
+              let height = components[3] else {
+            return nil
+        }
+        self.init(x: x, y: y, width: width, height: height)
     }
 }
