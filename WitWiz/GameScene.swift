@@ -324,6 +324,7 @@ class GameScene: SKScene, ObservableObject {
         let atlasName: String
         switch levelID {
         case 3: atlasName = "level_3_atlas"
+        case 4: atlasName = "level_4_atlas"
         default: atlasName = "level_default_atlas"
         }
         
@@ -373,6 +374,7 @@ class GameScene: SKScene, ObservableObject {
         case 1: backgroundColor = .systemBlue
         case 2: backgroundColor = .systemPink
         case 3: backgroundColor = .systemMint
+        case 4: backgroundColor = .systemTeal
         default: return
         }
         
@@ -390,6 +392,9 @@ class GameScene: SKScene, ObservableObject {
         
         for tileChunk in tileChunks {
             for tile in tileChunk.tiles {
+                if tile.id == 0 {
+                    continue
+                }
                 let tileGroup = tileSet.tileGroups.first(where: { $0.name == "tile_\(tile.id)" })!
                 tileMap.setTileGroup(tileGroup, forColumn: Int(tile.col), row: tileMap.numberOfRows - Int(tile.row) - 1)
             }
