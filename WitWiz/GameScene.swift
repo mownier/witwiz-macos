@@ -17,7 +17,7 @@ class GameScene: SKScene, ObservableObject {
     var levelID: Int32 = 0
     var characterIds: [Int32] = []
     var playerIDs: Set<Int32> = []
-    var tileChunks: [Witwiz_TileChunk] = []
+    var loadedTileChunks: Set<String> = []
     
     var playerInputContinuation: AsyncStream<Witwiz_PlayerInput>.Continuation?
     
@@ -132,7 +132,7 @@ class GameScene: SKScene, ObservableObject {
             playerInputContinuation = nil
             characterIds = []
             playerIDs = []
-            tileChunks = []
+            loadedTileChunks = []
             yourID = 0
             levelID = 0
             tileMap?.removeAllChildren()
@@ -235,9 +235,6 @@ class GameScene: SKScene, ObservableObject {
             state.players.forEach { player in
                 yourID = player.id
             }
-            if !state.tileChunks.isEmpty {
-                tileChunks = state.tileChunks
-            }
             return
         }
         updateGameStarted(state.gameStarted)
@@ -260,6 +257,7 @@ class GameScene: SKScene, ObservableObject {
             gameCamera?.removeFromParent()
             gameCamera = nil
             camera = nil
+            loadedTileChunks = []
             return
         }
         if state.hasNextLevelPortal {
@@ -267,7 +265,7 @@ class GameScene: SKScene, ObservableObject {
         }
         if state.levelID != 0 && levelID != state.levelID {
             levelID = state.levelID
-            createWorld(state.levelSize, state.levelPosition, state.levelEdges)
+            createWorld(state.levelSize, state.levelPosition, state.levelEdges, state.tileChunks)
         }
         createObstacles(state.obstacles)
         state.players.forEach { player in
@@ -288,7 +286,7 @@ class GameScene: SKScene, ObservableObject {
             playerIDs.insert(player.id)
         }
         if !state.players.isEmpty {
-            updateWorld(state.levelPosition, state.levelEdges)
+            updateWorld(state.levelPosition, state.levelEdges, state.tileChunks)
         }
         let toRemovePlayers = playerIDs.compactMap { playerID -> Int32? in
             if !state.players.contains(where: { $0.id == playerID }) {
@@ -300,7 +298,11 @@ class GameScene: SKScene, ObservableObject {
         toRemovePlayers.forEach { playerIDs.remove($0) }
     }
     
-    private func updateWorld(_ levelPoint: Witwiz_Point, _ levelEdges: [Witwiz_LevelEdgeState]) {
+    private func updateWorld(
+        _ levelPoint: Witwiz_Point,
+        _ levelEdges: [Witwiz_LevelEdgeState],
+        _ tileChunks: [Witwiz_TileChunk]
+    ) {
         for levelEdge in levelEdges {
             if let node = gameWorld?.childNode(withName: "levelEdge\(levelEdge.id)") {
                 node.position = CGPoint(x: levelEdge.position.x.cgFloat, y: levelEdge.position.y.cgFloat)
@@ -309,6 +311,22 @@ class GameScene: SKScene, ObservableObject {
         let position = CGPoint(x: levelPoint.x.cgFloat * -1, y: levelPoint.y.cgFloat * -1)
         let rect = CGRect(origin: position, size: size)
         gameCamera?.position = CGPoint(x: rect.midX, y: rect.midY)
+        
+        for tileChunk in tileChunks {
+            let name = "\(tileChunk.row),\(tileChunk.col)"
+            if loadedTileChunks.contains(name) {
+                continue
+            }
+            loadedTileChunks.insert(name)
+            for tile in tileChunk.tiles {
+                if tile.id == 0 {
+                    tileMap.setTileGroup(nil, forColumn: Int(tile.col), row: tileMap.numberOfRows - Int(tile.row) - 1)
+                    continue
+                }
+                let tileGroup = tileMap.tileSet.tileGroups.first(where: { $0.name == "tile_\(tile.id)" })!
+                tileMap.setTileGroup(tileGroup, forColumn: Int(tile.col), row: tileMap.numberOfRows - Int(tile.row) - 1)
+            }
+        }
     }
     
     private func createPlayer(_ player: Witwiz_PlayerState) {
@@ -357,7 +375,12 @@ class GameScene: SKScene, ObservableObject {
         return tileSet
     }
     
-    private func createWorld(_ levelSize: Witwiz_Size, _ levelPoint: Witwiz_Point, _ levelEdges: [Witwiz_LevelEdgeState]) {
+    private func createWorld(
+        _ levelSize: Witwiz_Size,
+        _ levelPoint: Witwiz_Point,
+        _ levelEdges: [Witwiz_LevelEdgeState],
+        _ tileChunks: [Witwiz_TileChunk]
+    ) {
         tileMap?.removeAllChildren()
         tileMap?.removeFromParent()
         tileMap = nil
@@ -369,6 +392,8 @@ class GameScene: SKScene, ObservableObject {
         gameCamera?.removeFromParent()
         gameCamera = nil
         camera = nil
+        
+        loadedTileChunks = []
         
         switch levelID {
         case 1: backgroundColor = .systemBlue
@@ -399,7 +424,6 @@ class GameScene: SKScene, ObservableObject {
                 tileMap.setTileGroup(tileGroup, forColumn: Int(tile.col), row: tileMap.numberOfRows - Int(tile.row) - 1)
             }
         }
-        tileChunks.removeAll()
         
         // Level edges
         for levelEdge in levelEdges {
