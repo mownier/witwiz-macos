@@ -8,6 +8,7 @@ import AppKit
 
 class GameScene: SKScene, ObservableObject {
     let tileSize: CGFloat = 32
+    let tileChunkSize: CGFloat = 16
     
     var connectClientTask: Task<Void, Error>?
     var processGameStateTask: Task<Void, Error>?
@@ -17,7 +18,7 @@ class GameScene: SKScene, ObservableObject {
     var levelID: Int32 = 0
     var characterIds: [Int32] = []
     var playerIDs: Set<Int32> = []
-    var loadedTileChunks: Set<String> = []
+    var allTileChunks: [String: Bool] = [:]
     
     var playerInputContinuation: AsyncStream<Witwiz_PlayerInput>.Continuation?
     
@@ -132,7 +133,6 @@ class GameScene: SKScene, ObservableObject {
             playerInputContinuation = nil
             characterIds = []
             playerIDs = []
-            loadedTileChunks = []
             yourID = 0
             levelID = 0
             tileMap?.removeAllChildren()
@@ -257,7 +257,7 @@ class GameScene: SKScene, ObservableObject {
             gameCamera?.removeFromParent()
             gameCamera = nil
             camera = nil
-            loadedTileChunks = []
+            allTileChunks = [:]
             return
         }
         if state.hasNextLevelPortal {
@@ -313,11 +313,16 @@ class GameScene: SKScene, ObservableObject {
         gameCamera?.position = CGPoint(x: rect.midX, y: rect.midY)
         
         for tileChunk in tileChunks {
-            let name = "\(tileChunk.row),\(tileChunk.col)"
-            if loadedTileChunks.contains(name) {
+            if tileChunk.row >= tileMap.numberOfRows ||
+                tileChunk.col >= tileMap.numberOfColumns ||
+                tileChunk.tiles.isEmpty {
                 continue
             }
-            loadedTileChunks.insert(name)
+            let name = "\(tileChunk.row),\(tileChunk.col)"
+            if allTileChunks[name] == true {
+                continue
+            }
+            allTileChunks[name] = true
             for tile in tileChunk.tiles {
                 if tile.id == 0 {
                     tileMap.setTileGroup(nil, forColumn: Int(tile.col), row: tileMap.numberOfRows - Int(tile.row) - 1)
@@ -327,6 +332,53 @@ class GameScene: SKScene, ObservableObject {
                 tileMap.setTileGroup(tileGroup, forColumn: Int(tile.col), row: tileMap.numberOfRows - Int(tile.row) - 1)
             }
         }
+        
+        if allTileChunks.reduce(true, { $0 && $1.value }) {
+            return
+        }
+        
+        let minX = levelPoint.x.cgFloat * -1
+        let maxX = minX + size.width
+        let minY = levelPoint.y.cgFloat * -1
+        let maxY = minY + size.height
+        
+        let minTileCol = floor(minX / tileSize)
+        let maxTileCol = ceil(maxX / tileSize)
+        let minTileRow = floor(minY / tileSize)
+        let maxTileRow = ceil(maxY / tileSize)
+        
+        let minChunkCol = Int(floor(minTileCol / tileChunkSize))
+        let maxChunkCol = Int(floor(maxTileCol / tileChunkSize))
+        let minChunkRow = Int(floor(minTileRow / tileChunkSize))
+        let maxChunkRow = Int(floor(maxTileRow / tileChunkSize))
+        
+        var tileChunksToLoad: [Witwiz_TileChunkToLoad] = []
+        
+        for chunkRow in minChunkRow...maxChunkRow {
+            for chunkCol in minChunkCol...maxChunkCol {
+                if chunkRow >= tileMap.numberOfRows || chunkCol >= tileMap.numberOfColumns {
+                    continue
+                }
+                let name = "\(chunkRow),\(chunkCol)"
+                let loaded = allTileChunks[name] ?? false
+                if !loaded {
+                    var tileChunkToLoad = Witwiz_TileChunkToLoad()
+                    tileChunkToLoad.col = Int32(chunkCol)
+                    tileChunkToLoad.row = Int32(chunkRow)
+                    tileChunksToLoad.append(tileChunkToLoad)
+                }
+            }
+        }
+        
+        if tileChunksToLoad.isEmpty {
+            return
+        }
+        
+        var input = Witwiz_PlayerInput()
+        input.playerID = yourID
+        input.action = .tileChunksRequest
+        input.tileChunksToLoad = tileChunksToLoad
+        playerInputContinuation?.yield(input)
     }
     
     private func createPlayer(_ player: Witwiz_PlayerState) {
@@ -393,7 +445,7 @@ class GameScene: SKScene, ObservableObject {
         gameCamera = nil
         camera = nil
         
-        loadedTileChunks = []
+        allTileChunks = [:]
         
         switch levelID {
         case 1: backgroundColor = .systemBlue
@@ -415,7 +467,24 @@ class GameScene: SKScene, ObservableObject {
         tileMap.tileSet = tileSet
         parentNode.addChild(tileMap)
         
+        let tileChunkRowCount: Int = tileMap.numberOfRows / Int(tileChunkSize)
+        let tileChunkColCount: Int = tileMap.numberOfColumns / Int(tileChunkSize)
+        
+        for chunkRow in 0..<tileChunkRowCount {
+            for chunkCol in 0..<tileChunkColCount {
+                let name = "\(chunkRow),\(chunkCol)"
+                allTileChunks[name] = false
+            }
+        }
+        
         for tileChunk in tileChunks {
+            if tileChunk.row >= tileMap.numberOfRows ||
+                tileChunk.col >= tileMap.numberOfColumns ||
+                tileChunk.tiles.isEmpty {
+                continue
+            }
+            let name = "\(tileChunk.row),\(tileChunk.col)"
+            allTileChunks[name] = true
             for tile in tileChunk.tiles {
                 if tile.id == 0 {
                     continue

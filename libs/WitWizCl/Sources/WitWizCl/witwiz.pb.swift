@@ -29,6 +29,8 @@ public struct Witwiz_PlayerInput: Sendable {
 
   public var characterID: Int32 = 0
 
+  public var tileChunksToLoad: [Witwiz_TileChunkToLoad] = []
+
   public var action: Witwiz_PlayerInput.Action = .none
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -47,6 +49,7 @@ public struct Witwiz_PlayerInput: Sendable {
     case shoot // = 9
     case selectCharacter // = 10
     case pauseResume // = 11
+    case tileChunksRequest // = 12
     case UNRECOGNIZED(Int)
 
     public init() {
@@ -67,6 +70,7 @@ public struct Witwiz_PlayerInput: Sendable {
       case 9: self = .shoot
       case 10: self = .selectCharacter
       case 11: self = .pauseResume
+      case 12: self = .tileChunksRequest
       default: self = .UNRECOGNIZED(rawValue)
       }
     }
@@ -85,6 +89,7 @@ public struct Witwiz_PlayerInput: Sendable {
       case .shoot: return 9
       case .selectCharacter: return 10
       case .pauseResume: return 11
+      case .tileChunksRequest: return 12
       case .UNRECOGNIZED(let i): return i
       }
     }
@@ -103,6 +108,7 @@ public struct Witwiz_PlayerInput: Sendable {
       .shoot,
       .selectCharacter,
       .pauseResume,
+      .tileChunksRequest,
     ]
 
   }
@@ -439,6 +445,20 @@ public struct Witwiz_TileChunk: Sendable {
   public init() {}
 }
 
+public struct Witwiz_TileChunkToLoad: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  public var row: Int32 = 0
+
+  public var col: Int32 = 0
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
 
 fileprivate let _protobuf_package = "witwiz"
@@ -448,6 +468,7 @@ extension Witwiz_PlayerInput: SwiftProtobuf.Message, SwiftProtobuf._MessageImple
   public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
     1: .standard(proto: "player_id"),
     2: .standard(proto: "character_id"),
+    3: .standard(proto: "tile_chunks_to_load"),
     4: .same(proto: "action"),
   ]
 
@@ -459,6 +480,7 @@ extension Witwiz_PlayerInput: SwiftProtobuf.Message, SwiftProtobuf._MessageImple
       switch fieldNumber {
       case 1: try { try decoder.decodeSingularInt32Field(value: &self.playerID) }()
       case 2: try { try decoder.decodeSingularInt32Field(value: &self.characterID) }()
+      case 3: try { try decoder.decodeRepeatedMessageField(value: &self.tileChunksToLoad) }()
       case 4: try { try decoder.decodeSingularEnumField(value: &self.action) }()
       default: break
       }
@@ -472,6 +494,9 @@ extension Witwiz_PlayerInput: SwiftProtobuf.Message, SwiftProtobuf._MessageImple
     if self.characterID != 0 {
       try visitor.visitSingularInt32Field(value: self.characterID, fieldNumber: 2)
     }
+    if !self.tileChunksToLoad.isEmpty {
+      try visitor.visitRepeatedMessageField(value: self.tileChunksToLoad, fieldNumber: 3)
+    }
     if self.action != .none {
       try visitor.visitSingularEnumField(value: self.action, fieldNumber: 4)
     }
@@ -481,6 +506,7 @@ extension Witwiz_PlayerInput: SwiftProtobuf.Message, SwiftProtobuf._MessageImple
   public static func ==(lhs: Witwiz_PlayerInput, rhs: Witwiz_PlayerInput) -> Bool {
     if lhs.playerID != rhs.playerID {return false}
     if lhs.characterID != rhs.characterID {return false}
+    if lhs.tileChunksToLoad != rhs.tileChunksToLoad {return false}
     if lhs.action != rhs.action {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
@@ -501,6 +527,7 @@ extension Witwiz_PlayerInput.Action: SwiftProtobuf._ProtoNameProviding {
     9: .same(proto: "SHOOT"),
     10: .same(proto: "SELECT_CHARACTER"),
     11: .same(proto: "PAUSE_RESUME"),
+    12: .same(proto: "TILE_CHUNKS_REQUEST"),
   ]
 }
 
@@ -1095,6 +1122,44 @@ extension Witwiz_TileChunk: SwiftProtobuf.Message, SwiftProtobuf._MessageImpleme
     if lhs.row != rhs.row {return false}
     if lhs.col != rhs.col {return false}
     if lhs.tiles != rhs.tiles {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Witwiz_TileChunkToLoad: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".TileChunkToLoad"
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    1: .same(proto: "row"),
+    2: .same(proto: "col"),
+  ]
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularInt32Field(value: &self.row) }()
+      case 2: try { try decoder.decodeSingularInt32Field(value: &self.col) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if self.row != 0 {
+      try visitor.visitSingularInt32Field(value: self.row, fieldNumber: 1)
+    }
+    if self.col != 0 {
+      try visitor.visitSingularInt32Field(value: self.col, fieldNumber: 2)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Witwiz_TileChunkToLoad, rhs: Witwiz_TileChunkToLoad) -> Bool {
+    if lhs.row != rhs.row {return false}
+    if lhs.col != rhs.col {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
