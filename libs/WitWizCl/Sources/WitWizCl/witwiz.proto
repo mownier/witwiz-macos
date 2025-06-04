@@ -44,6 +44,7 @@ message GameStateUpdate {
     repeated ObstacleState obstacles = 11;
     repeated LevelEdgeState level_edges = 12;
     repeated TileChunk tile_chunks = 13;
+    repeated FriendlyBulletState friendly_bullets = 14;
 }
 
 message PlayerState {
@@ -106,4 +107,14 @@ message TileChunk {
 message TileChunkToLoad {
     int32 row = 1;
     int32 col = 2;
+}
+
+message FriendlyBulletState {
+    string id = 1;
+    int32 owner_id = 2;
+    Point position = 3;
+    Size size = 4;
+    Vector velocity = 5;
+    bool active = 6;
+    int32 kind = 7;
 }

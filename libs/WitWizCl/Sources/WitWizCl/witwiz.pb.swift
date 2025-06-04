@@ -198,6 +198,11 @@ public struct Witwiz_GameStateUpdate: @unchecked Sendable {
     set {_uniqueStorage()._tileChunks = newValue}
   }
 
+  public var friendlyBullets: [Witwiz_FriendlyBulletState] {
+    get {return _storage._friendlyBullets}
+    set {_uniqueStorage()._friendlyBullets = newValue}
+  }
+
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
@@ -459,6 +464,55 @@ public struct Witwiz_TileChunkToLoad: Sendable {
   public init() {}
 }
 
+public struct Witwiz_FriendlyBulletState: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  public var id: String = String()
+
+  public var ownerID: Int32 = 0
+
+  public var position: Witwiz_Point {
+    get {return _position ?? Witwiz_Point()}
+    set {_position = newValue}
+  }
+  /// Returns true if `position` has been explicitly set.
+  public var hasPosition: Bool {return self._position != nil}
+  /// Clears the value of `position`. Subsequent reads from it will return its default value.
+  public mutating func clearPosition() {self._position = nil}
+
+  public var size: Witwiz_Size {
+    get {return _size ?? Witwiz_Size()}
+    set {_size = newValue}
+  }
+  /// Returns true if `size` has been explicitly set.
+  public var hasSize: Bool {return self._size != nil}
+  /// Clears the value of `size`. Subsequent reads from it will return its default value.
+  public mutating func clearSize() {self._size = nil}
+
+  public var velocity: Witwiz_Vector {
+    get {return _velocity ?? Witwiz_Vector()}
+    set {_velocity = newValue}
+  }
+  /// Returns true if `velocity` has been explicitly set.
+  public var hasVelocity: Bool {return self._velocity != nil}
+  /// Clears the value of `velocity`. Subsequent reads from it will return its default value.
+  public mutating func clearVelocity() {self._velocity = nil}
+
+  public var active: Bool = false
+
+  public var kind: Int32 = 0
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+
+  fileprivate var _position: Witwiz_Point? = nil
+  fileprivate var _size: Witwiz_Size? = nil
+  fileprivate var _velocity: Witwiz_Vector? = nil
+}
+
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
 
 fileprivate let _protobuf_package = "witwiz"
@@ -547,6 +601,7 @@ extension Witwiz_GameStateUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageI
     11: .same(proto: "obstacles"),
     12: .standard(proto: "level_edges"),
     13: .standard(proto: "tile_chunks"),
+    14: .standard(proto: "friendly_bullets"),
   ]
 
   fileprivate class _StorageClass {
@@ -563,6 +618,7 @@ extension Witwiz_GameStateUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageI
     var _obstacles: [Witwiz_ObstacleState] = []
     var _levelEdges: [Witwiz_LevelEdgeState] = []
     var _tileChunks: [Witwiz_TileChunk] = []
+    var _friendlyBullets: [Witwiz_FriendlyBulletState] = []
 
     #if swift(>=5.10)
       // This property is used as the initial default value for new instances of the type.
@@ -590,6 +646,7 @@ extension Witwiz_GameStateUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageI
       _obstacles = source._obstacles
       _levelEdges = source._levelEdges
       _tileChunks = source._tileChunks
+      _friendlyBullets = source._friendlyBullets
     }
   }
 
@@ -621,6 +678,7 @@ extension Witwiz_GameStateUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageI
         case 11: try { try decoder.decodeRepeatedMessageField(value: &_storage._obstacles) }()
         case 12: try { try decoder.decodeRepeatedMessageField(value: &_storage._levelEdges) }()
         case 13: try { try decoder.decodeRepeatedMessageField(value: &_storage._tileChunks) }()
+        case 14: try { try decoder.decodeRepeatedMessageField(value: &_storage._friendlyBullets) }()
         default: break
         }
       }
@@ -672,6 +730,9 @@ extension Witwiz_GameStateUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageI
       if !_storage._tileChunks.isEmpty {
         try visitor.visitRepeatedMessageField(value: _storage._tileChunks, fieldNumber: 13)
       }
+      if !_storage._friendlyBullets.isEmpty {
+        try visitor.visitRepeatedMessageField(value: _storage._friendlyBullets, fieldNumber: 14)
+      }
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -694,6 +755,7 @@ extension Witwiz_GameStateUpdate: SwiftProtobuf.Message, SwiftProtobuf._MessageI
         if _storage._obstacles != rhs_storage._obstacles {return false}
         if _storage._levelEdges != rhs_storage._levelEdges {return false}
         if _storage._tileChunks != rhs_storage._tileChunks {return false}
+        if _storage._friendlyBullets != rhs_storage._friendlyBullets {return false}
         return true
       }
       if !storagesAreEqual {return false}
@@ -1160,6 +1222,78 @@ extension Witwiz_TileChunkToLoad: SwiftProtobuf.Message, SwiftProtobuf._MessageI
   public static func ==(lhs: Witwiz_TileChunkToLoad, rhs: Witwiz_TileChunkToLoad) -> Bool {
     if lhs.row != rhs.row {return false}
     if lhs.col != rhs.col {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+extension Witwiz_FriendlyBulletState: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".FriendlyBulletState"
+  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
+    1: .same(proto: "id"),
+    2: .standard(proto: "owner_id"),
+    3: .same(proto: "position"),
+    4: .same(proto: "size"),
+    5: .same(proto: "velocity"),
+    6: .same(proto: "active"),
+    7: .same(proto: "kind"),
+  ]
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.id) }()
+      case 2: try { try decoder.decodeSingularInt32Field(value: &self.ownerID) }()
+      case 3: try { try decoder.decodeSingularMessageField(value: &self._position) }()
+      case 4: try { try decoder.decodeSingularMessageField(value: &self._size) }()
+      case 5: try { try decoder.decodeSingularMessageField(value: &self._velocity) }()
+      case 6: try { try decoder.decodeSingularBoolField(value: &self.active) }()
+      case 7: try { try decoder.decodeSingularInt32Field(value: &self.kind) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    if !self.id.isEmpty {
+      try visitor.visitSingularStringField(value: self.id, fieldNumber: 1)
+    }
+    if self.ownerID != 0 {
+      try visitor.visitSingularInt32Field(value: self.ownerID, fieldNumber: 2)
+    }
+    try { if let v = self._position {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 3)
+    } }()
+    try { if let v = self._size {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 4)
+    } }()
+    try { if let v = self._velocity {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 5)
+    } }()
+    if self.active != false {
+      try visitor.visitSingularBoolField(value: self.active, fieldNumber: 6)
+    }
+    if self.kind != 0 {
+      try visitor.visitSingularInt32Field(value: self.kind, fieldNumber: 7)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Witwiz_FriendlyBulletState, rhs: Witwiz_FriendlyBulletState) -> Bool {
+    if lhs.id != rhs.id {return false}
+    if lhs.ownerID != rhs.ownerID {return false}
+    if lhs._position != rhs._position {return false}
+    if lhs._size != rhs._size {return false}
+    if lhs._velocity != rhs._velocity {return false}
+    if lhs.active != rhs.active {return false}
+    if lhs.kind != rhs.kind {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

@@ -27,6 +27,7 @@ class GameScene: SKScene, ObservableObject {
     var moveRightKeyPressed: Bool = false
     var moveLeftKeyPressed: Bool = false
     var pauseGameKeyPressed: Bool = false
+    var shootKeyPressed: Bool = false
     
     var gameWorld: SKNode!
     var gameCamera: SKCameraNode!
@@ -79,6 +80,8 @@ class GameScene: SKScene, ObservableObject {
             input.action = .pauseResume
             input.playerID = yourID
             playerInputContinuation?.yield(input)
+        case 38 where !shootKeyPressed:  // j
+            shootKeyPressed = true
         default:
             break
         }
@@ -112,6 +115,12 @@ class GameScene: SKScene, ObservableObject {
             playerInputContinuation?.yield(input)
         case 49 where pauseGameKeyPressed: // space bar
             pauseGameKeyPressed = false
+        case 38 where shootKeyPressed: // j
+            shootKeyPressed = false
+            var input = Witwiz_PlayerInput()
+            input.action = .shoot
+            input.playerID = yourID
+            playerInputContinuation?.yield(input)
         default:
             break
         }
@@ -296,6 +305,22 @@ class GameScene: SKScene, ObservableObject {
             return nil
         }
         toRemovePlayers.forEach { playerIDs.remove($0) }
+        state.friendlyBullets.forEach { bullet in
+            if !bullet.active {
+                gameWorld?.childNode(withName: "friendly_bullet\(bullet.id)")?.removeFromParent()
+                return
+            }
+            if let node = gameWorld?.childNode(withName: "friendly_bullet\(bullet.id)") {
+                node.position = CGPoint(x: bullet.position.x.cgFloat, y: bullet.position.y.cgFloat)
+            } else {
+                let node = SKShapeNode(rectOf: CGSize(width: bullet.size.width.cgFloat, height: bullet.size.height.cgFloat))
+                node.fillColor = .red
+                node.name = "friendly_bullet\(bullet.id)"
+                node.position = CGPoint(x: bullet.position.x.cgFloat, y: bullet.position.y.cgFloat)
+                node.strokeColor = .clear
+                gameWorld?.addChild(node)
+            }
+        }
     }
     
     private func updateWorld(
